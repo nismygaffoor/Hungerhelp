@@ -21,6 +21,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 import DonorDashboard from './pages/DonorDashboard';
 import BeneficiaryDashboard from './pages/BeneficiaryDashboard';
 import VolunteerDashboard from './pages/VolunteerDashboard';
+import AdminDashboard from './pages/AdminDashboard'; // Import New Component
 
 // Placeholder Home/Dashboard
 const Home = () => {
@@ -51,7 +52,7 @@ const Home = () => {
         {user.role === 'Donor' && <DonorDashboard user={user} />}
         {user.role === 'Beneficiary' && <BeneficiaryDashboard />}
         {user.role === 'Volunteer' && <VolunteerDashboard />}
-        {user.role === 'Admin' && <div className="bg-white p-6 rounded shadow text-center">Admin Dashboard Placeholder</div>}
+        {user.role === 'Admin' && <AdminDashboard />}
 
       </main>
     </div>
