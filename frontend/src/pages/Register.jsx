@@ -75,19 +75,19 @@ const Register = () => {
             ></div>
 
             {/* Register Card */}
-            <div className="relative z-10 bg-white p-8 rounded-3xl shadow-2xl w-full max-w-lg mx-4 border border-white/50 backdrop-blur-sm bg-white/95">
+            <div className="relative z-10 bg-white p-6 rounded-3xl shadow-2xl w-full max-w-md mx-4 border border-white/50 backdrop-blur-sm bg-white/95">
 
                 {/* Logo Section */}
-                <div className="flex flex-col items-center mb-6">
+                <div className="flex flex-col items-center mb-3">
                     <div className="flex items-center gap-2">
-                        <Leaf className="text-green-600" size={28} />
-                        <span className="text-2xl font-bold text-green-700 tracking-tight">Hunger<span className="text-gray-500 font-light">Help</span></span>
+                        <Leaf className="text-green-600" size={20} />
+                        <span className="text-xl font-bold text-green-700 tracking-tight">Hunger<span className="text-gray-500 font-light">Help</span></span>
                     </div>
                 </div>
 
-                <div className="text-center mb-8">
-                    <h2 className="text-3xl font-serif font-bold text-gray-700">{roleContent[selectedRole].title}</h2>
-                    <p className="text-sm text-green-600 font-medium mt-1">{roleContent[selectedRole].slogan}</p>
+                <div className="text-center mb-4">
+                    <h2 className="text-2xl font-serif font-bold text-gray-700">{roleContent[selectedRole].title}</h2>
+                    <p className="text-xs text-green-600 font-medium mt-1">{roleContent[selectedRole].slogan}</p>
                 </div>
 
                 {/* Role Switcher */}
@@ -109,9 +109,9 @@ const Register = () => {
                     ))}
                 </div>
 
-                {error && <div className="bg-red-100 text-red-700 p-3 mb-6 rounded-lg text-sm text-center font-medium">{error}</div>}
+                {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded-lg text-sm text-center font-medium">{error}</div>}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-2">
                     <InputField placeholder="Full Name" name="name" value={formData.name} onChange={handleChange} />
 
                     {selectedRole === 'Donor' && (
@@ -137,7 +137,7 @@ const Register = () => {
 
                     <button
                         type="submit"
-                        className="w-full bg-[#1E5144] text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-[#163d33] transition-all transform active:scale-95 text-lg mt-6"
+                        className="w-full bg-[#1E5144] text-white font-bold py-2 rounded-xl shadow-lg hover:shadow-xl hover:bg-[#163d33] transition-all transform active:scale-95 text-base mt-4"
                     >
                         SIGN UP TO HELP
                     </button>
@@ -158,7 +158,7 @@ const InputField = ({ placeholder, name, type = "text", value, onChange }) => (
         type={type}
         name={name}
         placeholder={placeholder}
-        className="w-full border-b-2 border-gray-100 py-2 px-2 focus:outline-none focus:border-green-600 transition-colors text-base"
+        className="w-full border-b-2 border-gray-100 py-1 px-1 focus:outline-none focus:border-green-600 transition-colors text-base"
         value={value}
         onChange={onChange}
         required={name !== 'businessName' && name !== 'experience'}
