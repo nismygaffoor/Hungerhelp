@@ -22,6 +22,9 @@ const PostFood = () => {
     const [pickupTimes, setPickupTimes] = useState('');
     const [isUrgent, setIsUrgent] = useState(false);
     const [isRecurring, setIsRecurring] = useState(false);
+    const [frequency, setFrequency] = useState('Weekly');
+    const [recurringDay, setRecurringDay] = useState('Monday');
+    const [destination, setDestination] = useState('');
     const [loading, setLoading] = useState(false);
     const [images, setImages] = useState([]);
     const [previews, setPreviews] = useState([]);
@@ -64,6 +67,13 @@ const PostFood = () => {
             formData.append('location', `${location} | ${pickupTimes}`);
             formData.append('expiry_time', new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString());
             formData.append('description', description);
+            formData.append('is_recurring', isRecurring);
+            formData.append('is_urgent', isUrgent);
+            if (isRecurring) {
+                formData.append('frequency', frequency);
+                formData.append('day', recurringDay);
+                formData.append('destination', destination);
+            }
 
             images.forEach((image) => {
                 formData.append('images', image);
@@ -230,6 +240,51 @@ const PostFood = () => {
                                         </div>
                                         <p className="text-[11px] text-gray-400 italic">Urgent alerts notify volunteers immediately for time-sensitive food items.</p>
                                     </div>
+
+                                    {isRecurring && (
+                                        <div className="space-y-4 pt-4 border-t border-gray-50 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Frequency</label>
+                                                    <select
+                                                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer"
+                                                        value={frequency}
+                                                        onChange={(e) => setFrequency(e.target.value)}
+                                                    >
+                                                        <option>Daily</option>
+                                                        <option>Weekly</option>
+                                                        <option>Monthly</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Preferred Day</label>
+                                                    <select
+                                                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer"
+                                                        value={recurringDay}
+                                                        onChange={(e) => setRecurringDay(e.target.value)}
+                                                    >
+                                                        <option>Monday</option>
+                                                        <option>Tuesday</option>
+                                                        <option>Wednesday</option>
+                                                        <option>Thursday</option>
+                                                        <option>Friday</option>
+                                                        <option>Saturday</option>
+                                                        <option>Sunday</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Impact Destination</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="e.g., local Elders Home"
+                                                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
+                                                    value={destination}
+                                                    onChange={(e) => setDestination(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex justify-end pt-4">
