@@ -10,6 +10,16 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app) # Enable CORS for frontend communication
 
+# Configure Upload Folder
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(os.path.join(UPLOAD_FOLDER, 'food_posts'), exist_ok=True)
+
+from flask import send_from_directory
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 # Database Connection
 from db import db
 
