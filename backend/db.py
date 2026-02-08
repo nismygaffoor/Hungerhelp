@@ -16,13 +16,21 @@ if not MONGO_URI:
     MONGO_URI = "mongodb://localhost:27017/hungerhelp"
 
 try:
-    client = MongoClient(MONGO_URI)
+    # Try connecting with standard settings
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
     db = client.hungerhelp
     # Quick check
     client.server_info()
-    # Mask password for security in logs
     masked_uri = MONGO_URI.split('@')[-1] if '@' in MONGO_URI else MONGO_URI
     print(f"Successfully connected to MongoDB: ...@{masked_uri}")
 except Exception as e:
-    print(f"Failed to connect to MongoDB: {e}")
-    db = None
+    print(f"Standard connection failed: {e}")
+    try:
+        print("Attempting to connect with TLS verification disabled...")
+        client = MongoClient(MONGO_URI, tlsAllowInvalidCertificates=True, serverSelectionTimeoutMS=5000)
+        db = client.hungerhelp
+        client.server_info()
+        print("Connected to MongoDB (TLS verification disabled)")
+    except Exception as e2:
+        print(f"Failed to connect to MongoDB even with TLS bypass: {e2}")
+        db = None
