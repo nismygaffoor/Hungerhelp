@@ -86,6 +86,7 @@ function App() {
           <Route path="/donor/post" element={<ProtectedRoute allowedRoles={['Donor']}><PostFood /></ProtectedRoute>} />
           <Route path="/donor/recurring" element={<ProtectedRoute allowedRoles={['Donor']}><DonorRecurring /></ProtectedRoute>} />
           <Route path="/donor/history" element={<ProtectedRoute allowedRoles={['Donor']}><MyDonations /></ProtectedRoute>} />
+          <Route path="/donor/donation/:id" element={<ProtectedRoute allowedRoles={['Donor']}><DonationDetail /></ProtectedRoute>} />
           <Route path="/donor/feedback" element={<ProtectedRoute allowedRoles={['Donor']}><DonorFeedback /></ProtectedRoute>} />
 
           {/* Beneficiary Routes */}
