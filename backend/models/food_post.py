@@ -17,6 +17,7 @@ class FoodPost:
             "location": data['location'],
             "expiry_time": data.get('expiry_time'), # String or datetime
             "description": data.get('description', ""),
+            "images": data.get('images', []),
             "status": "Available", # Available, Claimed, Delivered, Expired
             "created_at": datetime.utcnow()
         }
