@@ -11,8 +11,8 @@ const LandingPage = () => {
                     <span className="text-green-700 tracking-tight">Hunger<span className="text-gray-500 font-light">Help</span></span>
                 </div>
                 <div className="hidden md:flex gap-8 font-extrabold text-lg">
-                    <a href="#" className="hover:text-green-600">Home</a>
-                    <a href="#" className="hover:text-green-600">About</a>
+                    <Link to="/" className="hover:text-green-600">Home</Link>
+                    <Link to="/about" className="hover:text-green-600">About</Link>
                     <a href="#" className="hover:text-green-600">How it Works</a>
                     <a href="#" className="hover:text-green-600">Contact</a>
                 </div>
