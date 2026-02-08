@@ -46,6 +46,13 @@ def create_post():
     data['donor_id'] = current_user['user_id']
     data['images'] = images
     
+    # Handle boolean conversion for is_recurring
+    if isinstance(data.get('is_recurring'), str):
+        data['is_recurring'] = data['is_recurring'].lower() == 'true'
+    
+    if isinstance(data.get('is_urgent'), str):
+        data['is_urgent'] = data['is_urgent'].lower() == 'true'
+    
     post_id = FoodPost.create(data)
     return jsonify({"message": "Food post created", "post_id": post_id}), 201
 
@@ -62,10 +69,20 @@ def get_posts():
 @token_required
 def get_my_posts():
     """
-    Get posts created by the logged-in donor.
+    Get all posts (recurring and non-recurring) created by the logged-in donor.
     """
     current_user = request.user_data
     posts = FoodPost.get_by_donor(current_user['user_id'])
+    return jsonify(posts), 200
+
+@food_bp.route('/my-recurring', methods=['GET'])
+@token_required
+def get_my_recurring():
+    """
+    Get recurring posts created by the logged-in donor.
+    """
+    current_user = request.user_data
+    posts = FoodPost.get_by_donor(current_user['user_id'], is_recurring=True)
     return jsonify(posts), 200
 
 @food_bp.route('/<post_id>', methods=['DELETE'])
@@ -79,6 +96,23 @@ def delete_post(post_id):
     
     status_code = 200 if success else 403 if message == "Unauthorized" else 404
     return jsonify({"message": message}), status_code
+
+@food_bp.route('/<post_id>/status', methods=['PATCH'])
+@token_required
+def update_post_status(post_id):
+    """Update status (e.g., Active/Paused for recurring)."""
+    current_user = request.user_data
+    data = request.json
+    
+    if not data or 'status' not in data:
+        return jsonify({"message": "Missing status"}), 400
+        
+    query = {"_id": ObjectId(post_id), "donor_id": current_user['user_id']}
+    result = FoodPost.collection.update_one(query, {"$set": {"status": data['status']}})
+    
+    if result.modified_count > 0:
+        return jsonify({"message": "Status updated"}), 200
+    return jsonify({"message": "Failed to update"}), 400
 
 # Import DeliveryTask here to avoid circular dependencies if placed at top
 from models.delivery import DeliveryTask
