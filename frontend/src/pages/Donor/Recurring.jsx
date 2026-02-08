@@ -4,10 +4,13 @@ import Navbar from '../../components/Navbar';
 import { Plus, Edit2, Pause, Play, Trash2, X, Camera, Loader2, ArrowRight } from 'lucide-react';
 import api from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
+import EditDonationModal from './EditDonationModal';
 
 const Recurring = () => {
     const [recurringItems, setRecurringItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
     const backendUrl = 'http://localhost:5000/uploads/';
     const navigate = useNavigate();
 
@@ -78,6 +81,11 @@ const Recurring = () => {
         }
     };
 
+    const handleEdit = (item) => {
+        setSelectedItem(item);
+        setIsEditing(true);
+    };
+
     return (
         <div className="flex min-h-screen bg-[#F9FAFB] font-sans">
             <Sidebar />
@@ -141,6 +149,12 @@ const Recurring = () => {
                                                     {item.status === 'Active' ? <Pause size={16} /> : <Play size={16} />}
                                                 </button>
                                                 <button
+                                                    onClick={() => handleEdit(item)}
+                                                    className="p-2 bg-blue-50 text-blue-400 hover:text-blue-600 rounded-full transition-all"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button
                                                     onClick={() => handleDelete(item._id)}
                                                     className="p-2 bg-red-50 text-red-400 hover:text-red-600 rounded-full transition-all"
                                                 >
@@ -199,16 +213,16 @@ const Recurring = () => {
 
                                             <div className="flex gap-4 pt-4">
                                                 <button
-                                                    onClick={() => handleToggleStatus(nextDonation)}
+                                                    onClick={() => handleEdit(nextDonation)}
                                                     className="flex-1 py-3 bg-[#E5E7EB] hover:bg-gray-300 text-gray-500 text-sm font-bold rounded-2xl transition-all"
                                                 >
-                                                    Pause
+                                                    Edit
                                                 </button>
                                                 <button
-                                                    onClick={() => navigate('/donor/post')}
+                                                    onClick={() => handleToggleStatus(nextDonation)}
                                                     className="flex-1 py-3 bg-[#76B56E] hover:bg-[#65a35e] text-white text-sm font-bold rounded-2xl transition-all shadow-sm"
                                                 >
-                                                    Manage
+                                                    {nextDonation.status === 'Active' ? 'Pause' : 'Activate'}
                                                 </button>
                                             </div>
                                         </div>
@@ -224,6 +238,13 @@ const Recurring = () => {
                     </div>
                 </div>
 
+
+                <EditDonationModal
+                    isOpen={isEditing}
+                    onClose={() => setIsEditing(false)}
+                    item={selectedItem}
+                    onUpdate={fetchRecurring}
+                />
             </main>
         </div>
     );
