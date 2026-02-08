@@ -1,4 +1,6 @@
 from flask import Blueprint, request, jsonify
+import os
+import uuid
 from models.food_post import FoodPost
 from middleware.auth_middleware import token_required
 from datetime import datetime
@@ -17,12 +19,32 @@ def create_post():
     if current_user['role'] != 'Donor':
         return jsonify({"error": "Only donors can post food"}), 403
 
-    data = request.json
+    # Handle both JSON and Multipart data
+    if request.is_json:
+        data = request.json
+    else:
+        data = request.form.to_dict()
+
     if not data or 'food_type' not in data or 'location' not in data:
         return jsonify({"error": "Missing required fields (food_type, location)"}), 400
 
-    # Add donor ID from the token
+    # Handle image uploads
+    images = []
+    if 'images' in request.files:
+        files = request.files.getlist('images')
+        for file in files:
+            if file and file.filename:
+                import uuid
+                filename = f"{uuid.uuid4()}_{file.filename}"
+                file_path = os.path.join('food_posts', filename)
+                full_path = os.path.join('uploads', file_path)
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                file.save(full_path)
+                images.append(file_path)
+
+    # Add donor ID and images from the token/request
     data['donor_id'] = current_user['user_id']
+    data['images'] = images
     
     post_id = FoodPost.create(data)
     return jsonify({"message": "Food post created", "post_id": post_id}), 201
