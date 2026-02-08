@@ -49,20 +49,20 @@ const MyDonations = () => {
             <main className="flex-1 ml-0 md:ml-64 bg-[#F9FAFB] min-h-screen">
                 <Navbar />
 
-                <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto">
+                <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
                     {/* Page Header */}
-                    <div className="flex justify-between items-end mb-8 mt-2 px-2">
+                    <div className="flex justify-between items-end mb-6 mt-2 px-2">
                         <div>
-                            <h2 className="text-3xl font-black text-gray-900 leading-tight">My Donations</h2>
-                            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1 opacity-60">Impact & History Tracking</p>
+                            <h2 className="text-2xl font-black text-gray-900 leading-tight">My Donations</h2>
+                            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1 opacity-60">Impact & History Tracking</p>
                         </div>
                     </div>
 
                     {/* Filter Controls */}
-                    <div className="flex flex-col md:flex-row gap-4 mb-10 px-2">
+                    <div className="flex flex-col md:flex-row gap-4 mb-8 px-2">
                         <div className="flex gap-4">
                             <div className="relative group min-w-[140px]">
-                                <select className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-700 shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none">
+                                <select className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none">
                                     <option>All Status</option>
                                     <option>Available</option>
                                     <option>Pending</option>
@@ -70,8 +70,8 @@ const MyDonations = () => {
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                             </div>
-                            <div className="relative group min-w-[160px]">
-                                <select className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-700 shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none">
+                            <div className="relative group min-w-[140px]">
+                                <select className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none">
                                     <option>Food Type</option>
                                     <option>Vegetables</option>
                                     <option>Baked Goods</option>
@@ -85,7 +85,7 @@ const MyDonations = () => {
                             <input
                                 type="text"
                                 placeholder="Search by item name or location..."
-                                className="w-full bg-white border border-gray-100 rounded-xl pl-12 pr-4 py-3 text-sm font-medium text-gray-700 shadow-sm focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
+                                className="w-full bg-white border border-gray-100 rounded-xl pl-12 pr-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
                             />
                         </div>
                     </div>
@@ -131,9 +131,9 @@ const DonationCard = ({ post, onDelete, backendUrl }) => {
     }
 
     return (
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col lg:flex-row items-center gap-8 group">
+        <div className="bg-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col lg:flex-row items-center gap-6 group">
             {/* 4-Image Grid Thumbnail */}
-            <div className="w-full lg:w-48 aspect-square rounded-[1.5rem] overflow-hidden grid grid-cols-2 gap-0.5 shadow-md group-hover:scale-105 transition-transform duration-500 flex-shrink-0">
+            <div className="w-full lg:w-40 aspect-square rounded-2xl overflow-hidden grid grid-cols-2 gap-0.5 shadow-md group-hover:scale-105 transition-transform duration-500 flex-shrink-0">
                 {displayImages.slice(0, 4).map((img, i) => (
                     <img
                         key={i}
@@ -145,8 +145,8 @@ const DonationCard = ({ post, onDelete, backendUrl }) => {
             </div>
 
             {/* Content Details */}
-            <div className="flex-1 text-center lg:text-left space-y-2">
-                <h4 className="text-xl font-black text-gray-900 leading-tight group-hover:text-green-700 transition-colors uppercase tracking-tight">
+            <div className="flex-1 text-center lg:text-left space-y-1">
+                <h4 className="text-lg font-black text-gray-900 leading-tight group-hover:text-green-700 transition-colors uppercase tracking-tight">
                     {post.food_type.split(' - ')[0]}
                 </h4>
                 <div className="flex flex-wrap justify-center lg:justify-start gap-3">
@@ -158,7 +158,7 @@ const DonationCard = ({ post, onDelete, backendUrl }) => {
                     </p>
                 </div>
                 <div className="pt-2">
-                    <p className="text-sm font-black text-gray-700 uppercase tracking-tight">
+                    <p className="text-xs font-black text-gray-700 uppercase tracking-tight">
                         <span className="text-gray-400 font-bold normal-case">For </span>
                         {post.location.split(' | ')[0]}
                     </p>
@@ -166,23 +166,35 @@ const DonationCard = ({ post, onDelete, backendUrl }) => {
             </div>
 
             {/* Status & Actions */}
-            <div className="flex flex-col items-center lg:items-end gap-5">
-                <span className={`px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest shadow-sm ${post.status === 'Available'
-                    ? 'bg-[#E8F5E9] text-[#2E7D32]'
-                    : 'bg-[#43A047] text-white'
-                    }`}>
-                    {post.status === 'Available' ? 'Pending Pickup' : 'Deliverd'}
-                </span>
+            <div className="flex flex-col items-center lg:items-end gap-4">
+                <div className="flex items-center gap-2">
+                    {post.is_urgent && (
+                        <span className="bg-[#EF5350] text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm animate-pulse">
+                            Urgent
+                        </span>
+                    )}
+                    {post.is_recurring && (
+                        <span className="bg-blue-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm">
+                            Recurring
+                        </span>
+                    )}
+                    <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${post.status === 'Available' || post.status === 'Active'
+                        ? 'bg-[#E8F5E9] text-[#2E7D32]'
+                        : 'bg-[#43A047] text-white'
+                        }`}>
+                        {post.status === 'Available' ? 'Pending Pickup' : post.status === 'Active' ? 'Active' : post.status === 'Paused' ? 'Paused' : 'Delivered'}
+                    </span>
+                </div>
 
                 <div className="flex items-center gap-3">
-                    <button className="bg-[#D1D5DB] text-gray-700 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-300 transition-all active:scale-95">
+                    <button className="bg-[#D1D5DB] text-gray-700 px-5 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-300 transition-all active:scale-95">
                         View Details
                     </button>
                     <button
                         onClick={onDelete}
-                        className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                     >
-                        <Trash2 size={18} />
+                        <Trash2 size={16} />
                     </button>
                 </div>
             </div>
