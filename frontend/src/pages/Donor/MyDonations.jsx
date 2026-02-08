@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import {
     Trash2,
     List,
     ChevronDown,
-    Search
+    Search,
+    Edit2
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
+import EditDonationModal from './EditDonationModal';
 
 const MyDonations = () => {
     const { user } = useAuth();
     const [myPosts, setMyPosts] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
     const backendUrl = 'http://localhost:5000/uploads/';
 
     useEffect(() => {
@@ -40,6 +45,11 @@ const MyDonations = () => {
         } catch (err) {
             alert("Failed to delete");
         }
+    };
+
+    const handleEdit = (item) => {
+        setSelectedItem(item);
+        setIsEditing(true);
     };
 
     return (
@@ -110,6 +120,7 @@ const MyDonations = () => {
                                     <DonationCard
                                         key={post._id}
                                         post={post}
+                                        onEdit={() => handleEdit(post)}
                                         onDelete={() => handleDelete(post._id)}
                                         backendUrl={backendUrl}
                                     />
@@ -118,12 +129,19 @@ const MyDonations = () => {
                         )}
                     </div>
                 </div>
+
+                <EditDonationModal
+                    isOpen={isEditing}
+                    onClose={() => setIsEditing(false)}
+                    item={selectedItem}
+                    onUpdate={fetchMyPosts}
+                />
             </main>
         </div>
     );
 };
 
-const DonationCard = ({ post, onDelete, backendUrl }) => {
+const DonationCard = ({ post, onEdit, onDelete, backendUrl }) => {
     // Generate placeholder images if fewer than 4 are provided
     const displayImages = [...(post.images || [])];
     while (displayImages.length < 4) {
@@ -189,6 +207,12 @@ const DonationCard = ({ post, onDelete, backendUrl }) => {
                 <div className="flex items-center gap-3">
                     <button className="bg-[#D1D5DB] text-gray-700 px-5 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-300 transition-all active:scale-95">
                         View Details
+                    </button>
+                    <button
+                        onClick={onEdit}
+                        className="p-2.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                    >
+                        <Edit2 size={16} />
                     </button>
                     <button
                         onClick={onDelete}
