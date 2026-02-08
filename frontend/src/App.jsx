@@ -24,6 +24,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 import DonorDashboard from './pages/Donor/Dashboard';
 import PostFood from './pages/Donor/PostFood';
 import MyDonations from './pages/Donor/MyDonations';
+import DonationDetail from './pages/Donor/DonationDetail';
 import DonorProfile from './pages/Donor/Profile';
 import DonorRecurring from './pages/Donor/Recurring';
 import DonorFeedback from './pages/Donor/Feedback';
