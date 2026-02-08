@@ -99,7 +99,7 @@ const ClaimFoods = () => {
                                                     <h4 className="text-sm font-bold text-gray-800">{post.food_type.split('-')[0]}</h4>
                                                     <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{post.quantity}</p>
                                                 </div>
-                                                {post.isUrgent && (
+                                                {post.is_urgent && (
                                                     <span className="bg-[#EF5350] text-white text-[10px] font-bold px-4 py-1.5 rounded-full shadow-sm">Urgent</span>
                                                 )}
                                             </div>
