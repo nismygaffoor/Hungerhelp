@@ -15,22 +15,35 @@ if not MONGO_URI:
     print("WARNING: MONGO_URI not found in .env file! Falling back to localhost.")
     MONGO_URI = "mongodb://localhost:27017/hungerhelp"
 
+import certifi
+
+# ... existing code ...
+
 try:
-    # Try connecting with standard settings
-    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    # Use certifi for SSL CA bundle
+    client = MongoClient(MONGO_URI, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=5000)
     db = client.hungerhelp
     # Quick check
     client.server_info()
     masked_uri = MONGO_URI.split('@')[-1] if '@' in MONGO_URI else MONGO_URI
-    print(f"Successfully connected to MongoDB: ...@{masked_uri}")
+    print(f"Successfully connected to MongoDB Atlas: ...@{masked_uri}")
 except Exception as e:
-    print(f"Standard connection failed: {e}")
+    error_msg = str(e)
+    print(f"Atlas connection failed: {error_msg}")
+    
+    if "TLSV1_ALERT_INTERNAL_ERROR" in error_msg:
+        print("\n" + "!"*60)
+        print("IMPORTANT: MongoDB Atlas is rejecting the connection with a TLS Alert.")
+        print("This ALMOST ALWAYS means your current IP address is NOT whitelisted in Atlas.")
+        print("Please log in to MongoDB Atlas and add '0.0.0.0/0' or your current IP to Network Access.")
+        print("!"*60 + "\n")
+    
     try:
-        print("Attempting to connect with TLS verification disabled...")
+        print("Final attempt: Connecting with TLS verification disabled...")
         client = MongoClient(MONGO_URI, tlsAllowInvalidCertificates=True, serverSelectionTimeoutMS=5000)
         db = client.hungerhelp
         client.server_info()
-        print("Connected to MongoDB (TLS verification disabled)")
+        print("Connected to MongoDB Atlas (TLS verification disabled)")
     except Exception as e2:
-        print(f"Failed to connect to MongoDB even with TLS bypass: {e2}")
+        print(f"CRITICAL: Could not connect to Atlas. Error: {e2}")
         db = None
