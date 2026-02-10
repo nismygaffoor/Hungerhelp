@@ -7,7 +7,8 @@ import {
     List,
     ChevronDown,
     Search,
-    Edit2
+    Edit2,
+    Clock
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
@@ -15,6 +16,7 @@ import EditDonationModal from './EditDonationModal';
 
 const MyDonations = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [myPosts, setMyPosts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -122,6 +124,7 @@ const MyDonations = () => {
                                         post={post}
                                         onEdit={() => handleEdit(post)}
                                         onDelete={() => handleDelete(post._id)}
+                                        onView={() => navigate(`/donor/donation/${post._id}`)}
                                         backendUrl={backendUrl}
                                     />
                                 ))}
@@ -141,15 +144,25 @@ const MyDonations = () => {
     );
 };
 
-const DonationCard = ({ post, onEdit, onDelete, backendUrl }) => {
-    // Generate placeholder images if fewer than 4 are provided
-    const displayImages = [...(post.images || [])];
+const DonationCard = ({ post, onEdit, onDelete, onView, backendUrl }) => {
+    // Collect images from all items
+    const items = post.items || [];
+    let displayImages = items.flatMap(item => item.images || []);
+
+    // Fallback to legacy images if no item images exist
+    if (displayImages.length === 0 && post.images) {
+        displayImages = [...post.images];
+    }
+
     while (displayImages.length < 4) {
         displayImages.push('https://images.unsplash.com/photo-1488459711635-de89ea219d53?w=200&h=200&fit=crop');
     }
 
     return (
-        <div className="bg-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col lg:flex-row items-center gap-6 group">
+        <div
+            onClick={onView}
+            className="bg-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col lg:flex-row items-center gap-6 group cursor-pointer"
+        >
             {/* 4-Image Grid Thumbnail */}
             <div className="w-full lg:w-40 aspect-square rounded-2xl overflow-hidden grid grid-cols-2 gap-0.5 shadow-md group-hover:scale-105 transition-transform duration-500 flex-shrink-0">
                 {displayImages.slice(0, 4).map((img, i) => (
@@ -168,18 +181,29 @@ const DonationCard = ({ post, onEdit, onDelete, backendUrl }) => {
                     {post.food_type.split(' - ')[0]}
                 </h4>
                 <div className="flex flex-wrap justify-center lg:justify-start gap-3">
-                    <p className="text-xs font-bold text-gray-400 opacity-80 uppercase tracking-widest leading-relaxed">
+                    {/* <p className="text-xs font-bold text-gray-400 opacity-80 uppercase tracking-widest leading-relaxed">
                         {post.food_type.split(' - ')[1] || 'Fresh Items'}
-                    </p>
+                    </p> */}
                     <p className="text-xs font-bold text-gray-400 opacity-80 uppercase tracking-widest leading-relaxed">
                         {post.quantity}
                     </p>
                 </div>
-                <div className="pt-2">
+                <div className="pt-2 flex flex-col gap-1">
                     <p className="text-xs font-black text-gray-700 uppercase tracking-tight">
-                        <span className="text-gray-400 font-bold normal-case">For </span>
+                        <span className="text-gray-400 font-bold normal-case">Pickup location </span>
                         {post.location.split(' | ')[0]}
                     </p>
+                    {post.expiry_time && !post.is_recurring && (
+                        <p className="text-[10px] font-bold text-amber-600 flex items-center gap-1">
+                            <Clock size={12} />
+                            Expires: {new Date(post.expiry_time).toLocaleString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -196,26 +220,36 @@ const DonationCard = ({ post, onEdit, onDelete, backendUrl }) => {
                             Recurring
                         </span>
                     )}
+                    {post.destination_type && (
+                        <span className="bg-purple-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1">
+                            🎯 {post.destination_name ? post.destination_name : `All ${post.destination_type}s`}
+                        </span>
+                    )}
                     <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${post.status === 'Available' || post.status === 'Active'
-                        ? 'bg-[#E8F5E9] text-[#2E7D32]'
-                        : 'bg-[#43A047] text-white'
+                            ? 'bg-[#E8F5E9] text-[#2E7D32]'
+                            : post.status === 'Pending Pickup'
+                                ? 'bg-[#98E158] text-white'
+                                : 'bg-[#43A047] text-white'
                         }`}>
-                        {post.status === 'Available' ? 'Pending Pickup' : post.status === 'Active' ? 'Active' : post.status === 'Paused' ? 'Paused' : 'Delivered'}
+                        {post.status}
                     </span>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button className="bg-[#D1D5DB] text-gray-700 px-5 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-300 transition-all active:scale-95">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onView(); }}
+                        className="bg-[#D1D5DB] text-gray-700 px-5 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-300 transition-all active:scale-95"
+                    >
                         View Details
                     </button>
                     <button
-                        onClick={onEdit}
+                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
                         className="p-2.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
                     >
                         <Edit2 size={16} />
                     </button>
                     <button
-                        onClick={onDelete}
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
                         className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                     >
                         <Trash2 size={16} />
