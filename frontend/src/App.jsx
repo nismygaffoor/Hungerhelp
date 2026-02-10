@@ -33,6 +33,7 @@ import DonorFeedback from './pages/Donor/Feedback';
 import BeneficiaryDashboard from './pages/Benificiary/Dashboard';
 import ClaimFoods from './pages/Benificiary/ClaimFoods';
 import MyClaims from './pages/Benificiary/MyClaims';
+import BeneficiaryDonationDetail from './pages/Benificiary/BeneficiaryDonationDetail';
 import BeneficiaryProfile from './pages/Benificiary/Profile';
 import BeneficiaryRequest from './pages/Benificiary/Request';
 import BeneficiaryFeedback from './pages/Benificiary/Feedback';
@@ -94,6 +95,7 @@ function App() {
           <Route path="/beneficiary/profile" element={<ProtectedRoute allowedRoles={['Beneficiary']}><BeneficiaryProfile /></ProtectedRoute>} />
           <Route path="/beneficiary/claim" element={<ProtectedRoute allowedRoles={['Beneficiary']}><ClaimFoods /></ProtectedRoute>} />
           <Route path="/beneficiary/history" element={<ProtectedRoute allowedRoles={['Beneficiary']}><MyClaims /></ProtectedRoute>} />
+          <Route path="/beneficiary/donation/:id" element={<ProtectedRoute allowedRoles={['Beneficiary']}><BeneficiaryDonationDetail /></ProtectedRoute>} />
           <Route path="/beneficiary/request" element={<ProtectedRoute allowedRoles={['Beneficiary']}><BeneficiaryRequest /></ProtectedRoute>} />
           <Route path="/beneficiary/feedback" element={<ProtectedRoute allowedRoles={['Beneficiary']}><BeneficiaryFeedback /></ProtectedRoute>} />
 
