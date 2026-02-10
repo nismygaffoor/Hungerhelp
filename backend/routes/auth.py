@@ -17,12 +17,16 @@ def register():
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.json
-    if not data or 'email' not in data or 'password' not in data:
-        return jsonify({"error": "Email and password are required"}), 400
+    if not data or 'email' not in data or 'password' not in data or 'role' not in data:
+        return jsonify({"error": "Email, password, and role are required"}), 400
 
     user = User.find_by_email(data['email'])
     
     if user and User.verify_password(user['password'], data['password']):
+        # Verify role match (case-insensitive)
+        if str(data['role']).lower() != str(user['role']).lower():
+            return jsonify({"error": f"This account is registered as a {user['role']}, not a {data['role']}"}), 401
+
         # Generate JWT Token
         token = jwt.encode({
             'user_id': str(user['_id']),
