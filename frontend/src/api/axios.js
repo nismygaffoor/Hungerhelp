@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Assuming Flask runs on port 5000
 const api = axios.create({
     baseURL: 'http://localhost:5000',
     headers: {
