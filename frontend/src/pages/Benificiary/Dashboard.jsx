@@ -15,15 +15,20 @@ import Navbar from '../../components/Navbar';
 const Dashboard = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [stats, setStats] = useState({ totalClaimed: 0, pendingPickups: 0 });
+    const [stats, setStats] = useState({ totalClaimed: 0, pendingPickups: 0, delivered: 0 });
+    const [recentClaims, setRecentClaims] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                // In a real app, you'd fetch stats from the backend
-                // For now, let's mock it
-                setStats({ totalClaimed: 42, pendingPickups: 3 });
+                const res = await api.get('/claims/stats');
+                setStats({
+                    totalClaimed: res.data.stats.total_claimed,
+                    pendingPickups: res.data.stats.pending_pickups,
+                    delivered: res.data.stats.delivered
+                });
+                setRecentClaims(res.data.recent_activity);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -32,12 +37,6 @@ const Dashboard = () => {
         };
         fetchStats();
     }, []);
-
-    const recentClaimsMock = [
-        { title: 'Fresh Baked Bread', time: 'Yesterday', status: 'Delivered' },
-        { title: 'Organic Apples', time: '2 days ago', status: 'Pending' },
-        { title: 'Canned Goods Box', time: '5 days ago', status: 'Delivered' }
-    ];
 
     return (
         <div className="flex min-h-screen bg-white font-sans">
@@ -59,12 +58,19 @@ const Dashboard = () => {
                             <p className="text-sm text-gray-400 mb-6 font-medium">Your latest food requests history.</p>
 
                             <div className="space-y-4">
-                                {recentClaimsMock.map((item, idx) => (
-                                    <div key={idx} className="flex justify-between items-center p-4 rounded-xl bg-gray-50/50">
-                                        <span className="text-sm font-bold text-gray-700">{item.title}</span>
-                                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${item.status === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{item.status}</span>
-                                    </div>
-                                ))}
+                                {recentClaims.length === 0 ? (
+                                    <p className="text-sm text-gray-400 italic">No recent claims.</p>
+                                ) : (
+                                    recentClaims.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between items-center p-4 rounded-xl bg-gray-50/50">
+                                            <span className="text-sm font-bold text-gray-700">{item.title}</span>
+                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${item.status === 'Delivered' ? 'bg-green-100 text-green-700' :
+                                                    item.status === 'Pending Pickup' ? 'bg-orange-100 text-orange-700' :
+                                                        'bg-blue-100 text-blue-700'
+                                                }`}>{item.status}</span>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
 
@@ -81,13 +87,21 @@ const Dashboard = () => {
                             <h3 className="text-xl font-bold text-gray-800 mb-4">Pending Pickups</h3>
                             <p className="text-sm text-gray-400 mb-6 font-medium">Coordinate your collection times.</p>
                             <div className="space-y-4">
-                                <div className="p-4 rounded-xl bg-orange-50 border border-orange-100 flex items-start gap-3">
-                                    <Clock size={18} className="text-orange-500 mt-1" />
-                                    <div>
-                                        <p className="text-sm font-bold text-gray-800">Fresh Veggies</p>
-                                        <p className="text-[10px] text-orange-600 font-bold uppercase">Pickup Today, 4:00 PM</p>
+                                {recentClaims.filter(c => c.status === 'Pending Pickup').length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center h-full text-center mt-4">
+                                        <p className="text-sm text-gray-400 italic">No pending pickups.</p>
                                     </div>
-                                </div>
+                                ) : (
+                                    recentClaims.filter(c => c.status === 'Pending Pickup').map((item, idx) => (
+                                        <div key={idx} className="p-4 rounded-xl bg-orange-50 border border-orange-100 flex items-start gap-3">
+                                            <Clock size={16} className="text-orange-500 mt-0.5" />
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-800">{item.title}</p>
+                                                <p className="text-[10px] text-orange-600 font-bold uppercase mt-1">Status: {item.status}</p>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
                     </div>
