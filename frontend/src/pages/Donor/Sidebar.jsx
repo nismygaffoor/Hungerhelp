@@ -22,10 +22,12 @@ const Sidebar = () => {
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: <Timer size={22} />, path: '/donor/dashboard' },
         { id: 'profile', label: 'Your Profile', icon: <User size={22} />, path: '/donor/profile' },
+        { id: 'requested food', label: 'Requested food', icon: <FileText size={22} />, path: '/donor/requestedfood' },
         { id: 'post', label: 'Post Food', icon: <MessageSquare size={22} />, path: '/donor/post' },
         { id: 'recurring', label: 'Recurring Donations', icon: <Users size={22} />, path: '/donor/recurring' },
         { id: 'history', label: 'My Donations', icon: <List size={22} />, path: '/donor/history' },
         { id: 'feedback', label: 'Feedback', icon: <FileText size={22} />, path: '/donor/feedback' },
+          
     ];
 
     const handleLogout = () => {
@@ -37,8 +39,8 @@ const Sidebar = () => {
         <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-100 flex flex-col z-50">
             {/* Logo */}
             <div className="p-6 mb-4 flex items-center gap-2">
-                <Leaf className="text-[#1E5144]" size={24} />
-                <span className="text-xl font-bold text-gray-700 tracking-tight">Hunger<span className="text-gray-400 font-light">Help</span></span>
+                <Leaf className="text-green-600" size={28} />
+                <span className="text-2xl font-bold text-green-700 tracking-tight">Hunger<span className="text-gray-500 font-light">Help</span></span>
             </div>
 
             {/* Navigation menu */}
