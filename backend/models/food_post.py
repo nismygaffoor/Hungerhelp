@@ -24,6 +24,10 @@ class FoodPost:
             "frequency": data.get('frequency', ""),
             "day": data.get('day', ""),
             "destination": data.get('destination', ""),
+            "items": data.get('items', []),
+            "destination": data.get('destination', ""),  # Legacy field for backward compatibility
+            "destination_type": data.get('destination_type', ""),  # e.g., "Elder's Home", "Orphanage"
+            "destination_name": data.get('destination_name', ""),  # Specific beneficiary name
             "created_at": datetime.utcnow()
         }
         result = FoodPost.collection.insert_one(post_doc)
@@ -31,8 +35,23 @@ class FoodPost:
 
     @staticmethod
     def get_all_available():
+        # Get current time as ISO string for lexicographical comparison
+        now_iso = datetime.utcnow().isoformat()
+        
         # Retrieve all non-recurring posts where status is 'Available'
-        cursor = FoodPost.collection.find({"status": "Available", "is_recurring": False}).sort("created_at", -1)
+        # Filter: Either no expiry time OR expiry time is in the future
+        query = {
+            "status": "Available",
+            "is_recurring": False,
+            "$or": [
+                {"expiry_time": {"$gt": now_iso}},
+                {"expiry_time": None},
+                {"expiry_time": ""},
+                {"expiry_time": {"$exists": False}}
+            ]
+        }
+        
+        cursor = FoodPost.collection.find(query).sort("created_at", -1)
         posts = []
         for doc in cursor:
             doc['_id'] = str(doc['_id'])
@@ -80,7 +99,8 @@ class FoodPost:
         allowed_fields = [
             'food_type', 'quantity', 'location', 'expiry_time', 
             'description', 'is_recurring', 'is_urgent', 
-            'frequency', 'day', 'destination', 'status'
+            'frequency', 'day', 'destination', 'status', 'items',
+            'destination_type', 'destination_name'
         ]
         
         for field in allowed_fields:
