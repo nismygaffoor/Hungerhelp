@@ -4,8 +4,7 @@ import api from '../../api/axios';
 
 const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
     const [formData, setFormData] = useState({
-        food_type: '',
-        quantity: '',
+        items: [],
         location: '',
         pickup_times: '',
         description: '',
@@ -15,7 +14,8 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
         frequency: '',
         day: '',
         destination: '',
-        images: []
+        destination_type: '',
+        destination_name: ''
     });
     const [submitting, setSubmitting] = useState(false);
 
@@ -23,8 +23,7 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
         if (item) {
             const [loc, times] = (item.location || '').split(' | ');
             setFormData({
-                food_type: item.food_type?.split(' - ')[0] || '',
-                quantity: item.quantity || '',
+                items: item.items || [{ category: item.food_type?.split(' - ')[0] || '', quantity: item.quantity || '', images: [] }],
                 location: loc || '',
                 pickup_times: times || '',
                 description: item.description || '',
@@ -34,7 +33,8 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                 frequency: item.frequency || '',
                 day: item.day || '',
                 destination: item.destination || '',
-                images: item.images || []
+                destination_type: item.destination_type || '',
+                destination_name: item.destination_name || ''
             });
         }
     }, [item]);
@@ -45,13 +45,16 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
         e.preventDefault();
         setSubmitting(true);
         try {
+            const foodTypeString = formData.items.map(i => i.category).join(', ');
+            const quantityString = formData.items.map(i => i.quantity).join(', ');
+
             const submissionData = {
                 ...formData,
                 location: formData.pickup_times ? `${formData.location} | ${formData.pickup_times}` : formData.location,
-                food_type: formData.description ? `${formData.food_type} - ${formData.description}` : formData.food_type
+                food_type: formData.description ? `${foodTypeString} - ${formData.description}` : foodTypeString,
+                quantity: quantityString
             };
-            delete submissionData.pickup_times; // Don't send this as separate field
-            delete submissionData.images; // Currently images not editable via PUT
+            delete submissionData.pickup_times;
 
             await api.put(`/food/${item._id}`, submissionData);
             onUpdate();
@@ -79,30 +82,83 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                 </div>
 
                 <div className="p-6">
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Food Category</label>
-                                <input
-                                    required
-                                    type="text"
-                                    placeholder="e.g., Fresh Produce, Baked Goods"
-                                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
-                                    value={formData.food_type}
-                                    onChange={(e) => setFormData({ ...formData, food_type: e.target.value })}
-                                />
-                            </div>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-4">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Food Items</label>
+                            {formData.items.map((foodItem, index) => (
+                                <div key={index} className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50 space-y-4">
+                                    <div className="flex gap-3">
+                                        <div className="flex-1">
+                                            <input
+                                                required
+                                                type="text"
+                                                placeholder="Item type"
+                                                className="w-full bg-white border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 outline-none"
+                                                value={foodItem.category}
+                                                onChange={(e) => {
+                                                    const newItems = [...formData.items];
+                                                    newItems[index].category = e.target.value;
+                                                    setFormData({ ...formData, items: newItems });
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="w-1/3">
+                                            <input
+                                                required
+                                                type="text"
+                                                placeholder="Qty"
+                                                className="w-full bg-white border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 outline-none"
+                                                value={foodItem.quantity}
+                                                onChange={(e) => {
+                                                    const newItems = [...formData.items];
+                                                    newItems[index].quantity = e.target.value;
+                                                    setFormData({ ...formData, items: newItems });
+                                                }}
+                                            />
+                                        </div>
+                                        {formData.items.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newItems = formData.items.filter((_, i) => i !== index);
+                                                    setFormData({ ...formData, items: newItems });
+                                                }}
+                                                className="p-3 text-red-400 hover:text-red-600 transition-all"
+                                            >
+                                                <X size={18} />
+                                            </button>
+                                        )}
+                                    </div>
 
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Quantity</label>
-                                <input
-                                    required
-                                    type="text"
-                                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
-                                    value={formData.quantity}
-                                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                                />
-                            </div>
+                                    {/* Existing Images for this item */}
+                                    {foodItem.images?.length > 0 && (
+                                        <div className="flex gap-2 overflow-x-auto pb-1">
+                                            {foodItem.images.map((img, imgIdx) => (
+                                                <div key={imgIdx} className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-gray-100">
+                                                    <img
+                                                        src={img.startsWith('http') ? img : `http://localhost:5000/uploads/${img}`}
+                                                        className="w-full h-full object-cover"
+                                                        alt="Item"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={() => setFormData({
+                                    ...formData,
+                                    items: [...formData.items, { category: '', quantity: '', images: [] }]
+                                })}
+                                className="text-sm font-bold text-green-600 hover:text-green-700 ml-1"
+                            >
+                                + Add another item
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
 
                             {!formData.is_recurring && (
                                 <>
@@ -183,13 +239,35 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                                         </select>
                                     </div>
                                     <div className="col-span-2">
-                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Destination</label>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                            Beneficiary Type <span className="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer"
+                                            value={formData.destination_type}
+                                            onChange={(e) => setFormData({ ...formData, destination_type: e.target.value })}
+                                        >
+                                            <option value="">Select Type...</option>
+                                            <option value="Elder's Home">Elder's Home</option>
+                                            <option value="Orphanage">Orphanage</option>
+                                            <option value="Individual">Individual</option>
+                                            <option value="Community Center">Community Center</option>
+                                            <option value="Shelter">Shelter</option>
+                                        </select>
+                                        <p className="text-[10px] text-gray-400 mt-1 ml-1">This donation will be shown to all beneficiaries of this type</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                            Specific Beneficiary Name (Optional)
+                                        </label>
                                         <input
                                             type="text"
+                                            placeholder="e.g., St. Mary's Elder Home"
                                             className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
-                                            value={formData.destination}
-                                            onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
+                                            value={formData.destination_name}
+                                            onChange={(e) => setFormData({ ...formData, destination_name: e.target.value })}
                                         />
+                                        <p className="text-[10px] text-gray-400 mt-1 ml-1">If specified, only this beneficiary will see the donation</p>
                                     </div>
                                 </>
                             )}
