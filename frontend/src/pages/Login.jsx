@@ -14,7 +14,7 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        const res = await login(email, password);
+        const res = await login(email, password, selectedRole);
         if (res.success) {
             navigate('/dashboard');
         } else {
