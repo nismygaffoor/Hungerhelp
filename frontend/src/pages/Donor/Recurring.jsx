@@ -141,6 +141,11 @@ const Recurring = () => {
                                                     }`}>
                                                     {item.status}
                                                 </span>
+                                                {item.destination_type && (
+                                                    <span className="bg-purple-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-sm mr-2">
+                                                        🎯 {item.destination_name ? item.destination_name : `All ${item.destination_type}s`}
+                                                    </span>
+                                                )}
                                                 <button
                                                     onClick={() => handleToggleStatus(item)}
                                                     className={`p-2 rounded-full transition-all ${item.status === 'Active' ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-green-50 text-green-600 hover:bg-green-100'
