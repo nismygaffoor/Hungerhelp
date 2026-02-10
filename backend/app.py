@@ -31,6 +31,7 @@ else:
 
 from routes.auth import auth_bp
 from routes.food import food_bp
+from routes.claims import claims_bp
 from routes.delivery import delivery_bp
 from routes.request import request_bp
 from routes.admin import admin_bp
@@ -38,6 +39,7 @@ from routes.feedback import feedback_bp
 
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(food_bp, url_prefix='/food')
+app.register_blueprint(claims_bp, url_prefix='/claims')
 app.register_blueprint(delivery_bp, url_prefix='/delivery')
 app.register_blueprint(request_bp, url_prefix='/request')
 app.register_blueprint(admin_bp, url_prefix='/admin')
