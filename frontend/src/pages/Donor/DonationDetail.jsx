@@ -79,12 +79,22 @@ const DonationDetail = () => {
     const foodName = donation.food_type?.split(' - ')[0] || 'Food Donation';
     const foodDesc = donation.food_type?.split(' - ')[1] || donation.description || '';
     const [location, pickupTimes] = (donation.location || '').split(' | ');
-    const images = donation.images || [];
+
+    // Collect all images from items
+    const allItemImages = (donation.items || []).reduce((acc, item) => {
+        if (item.images && item.images.length > 0) {
+            return [...acc, ...item.images];
+        }
+        return acc;
+    }, []);
+
+    const images = (donation.images && donation.images.length > 0) ? donation.images : allItemImages;
     const hasImages = images.length > 0;
 
     const statusColors = {
         'Available': 'bg-green-100 text-green-700',
         'Active': 'bg-blue-100 text-blue-700',
+        'Pending Pickup': 'bg-[#98E158] text-white',
         'Delivered': 'bg-purple-100 text-purple-700',
         'Cancelled': 'bg-red-100 text-red-700'
     };
@@ -144,7 +154,7 @@ const DonationDetail = () => {
 
                             {/* Main Details Card */}
                             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-50">
-                                <div className="flex items-start justify-between mb-4">
+                                <div className="flex items-start justify-between mb-6">
                                     <div className="flex-1">
                                         <h1 className="text-2xl font-black text-gray-900 mb-2">{foodName}</h1>
                                         {foodDesc && (
@@ -167,17 +177,25 @@ const DonationDetail = () => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                                    <div className="flex items-start gap-3">
-                                        <div className="p-2 bg-green-100 rounded-lg">
-                                            <Package size={20} className="text-green-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Quantity</p>
-                                            <p className="text-sm font-bold text-gray-900 mt-1">{donation.quantity || 'Not specified'}</p>
-                                        </div>
+                                {/* Items Breakdown */}
+                                <div className="border-t border-b border-gray-100 py-6 mb-6">
+                                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Donated Items</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {(donation.items || [{ category: foodName, quantity: donation.quantity }]).map((item, idx) => (
+                                            <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <div className="p-2 bg-white rounded-lg shadow-sm">
+                                                    <Package size={18} className="text-green-600" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-gray-900">{item.category}</p>
+                                                    <p className="text-xs font-medium text-gray-500">{item.quantity}</p>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
+                                </div>
 
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {!donation.is_recurring && location && (
                                         <div className="flex items-start gap-3">
                                             <div className="p-2 bg-blue-100 rounded-lg">
@@ -210,7 +228,13 @@ const DonationDetail = () => {
                                             <div>
                                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Expiry Time</p>
                                                 <p className="text-sm font-bold text-gray-900 mt-1">
-                                                    {new Date(donation.expiry_time).toLocaleString()}
+                                                    {new Date(donation.expiry_time).toLocaleString('en-US', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
                                                 </p>
                                             </div>
                                         </div>
