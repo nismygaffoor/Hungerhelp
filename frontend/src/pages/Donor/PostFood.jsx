@@ -15,8 +15,7 @@ import Navbar from '../../components/Navbar';
 
 const PostFood = () => {
     const { user } = useAuth();
-    const [category, setCategory] = useState('');
-    const [quantity, setQuantity] = useState('');
+    const [items, setItems] = useState([{ category: '', quantity: '', images: [], previews: [] }]);
     const [description, setDescription] = useState('');
     const [location, setLocation] = useState(user?.address || '');
     const [pickupTimes, setPickupTimes] = useState('');
@@ -25,58 +24,110 @@ const PostFood = () => {
     const [frequency, setFrequency] = useState('Weekly');
     const [recurringDay, setRecurringDay] = useState('Monday');
     const [destination, setDestination] = useState('');
+    const [destinationType, setDestinationType] = useState('');
+    const [destinationName, setDestinationName] = useState('');
     const [loading, setLoading] = useState(false);
-    const [images, setImages] = useState([]);
-    const [previews, setPreviews] = useState([]);
+    const [expiryDate, setExpiryDate] = useState(() => {
+        const date = new Date();
+        date.setHours(date.getHours() + 24);
+        return date.toISOString().slice(0, 16);
+    });
 
-    const handleImageChange = (e) => {
+    const handleItemChange = (index, field, value) => {
+        const newItems = [...items];
+        newItems[index][field] = value;
+        setItems(newItems);
+    };
+
+    const addItem = () => {
+        setItems([...items, { category: '', quantity: '', images: [], previews: [] }]);
+    };
+
+    const removeItem = (index) => {
+        if (items.length > 1) {
+            const newItems = items.filter((_, i) => i !== index);
+            setItems(newItems);
+        }
+    };
+
+    const handleItemImageChange = (index, e) => {
         const files = Array.from(e.target.files);
-        if (images.length + files.length > 4) {
-            alert("Maximum 4 images allowed.");
+        const currentItem = items[index];
+
+        if (currentItem.images.length + files.length > 4) {
+            alert("Maximum 4 images per item allowed.");
             return;
         }
 
-        const newImages = [...images, ...files];
-        setImages(newImages);
-
+        const newItems = [...items];
+        newItems[index].images = [...currentItem.images, ...files];
         const newPreviews = files.map(file => URL.createObjectURL(file));
-        setPreviews([...previews, ...newPreviews]);
+        newItems[index].previews = [...currentItem.previews, ...newPreviews];
+        setItems(newItems);
     };
 
-    const removeImage = (index) => {
-        const newImages = [...images];
-        newImages.splice(index, 1);
-        setImages(newImages);
+    const removeItemImage = (itemIndex, imageIndex) => {
+        const newItems = [...items];
+        const item = newItems[itemIndex];
 
-        const newPreviews = [...previews];
-        newPreviews.splice(index, 1);
-        setPreviews(newPreviews);
+        const newImages = [...item.images];
+        newImages.splice(imageIndex, 1);
+        item.images = newImages;
+
+        const newPreviews = [...item.previews];
+        newPreviews.splice(imageIndex, 1);
+        item.previews = newPreviews;
+
+        setItems(newItems);
     };
 
     const handlePost = async () => {
-        if (!category || !quantity || !location) {
-            alert("Please fill in required fields.");
+        // Validate all items
+        const invalidItems = items.some(item => !item.category || !item.quantity);
+        if (invalidItems || !location) {
+            alert("Please fill in required fields for all items.");
             return;
         }
 
         setLoading(true);
         try {
+            // Aggregate items into strings for backward compatibility
+            const foodTypeString = items.map(i => i.category).join(', ');
+            const quantityString = items.map(i => i.quantity).join(', ');
+            // Description might be generic, so we append it once
+            const finalFoodType = description ? `${foodTypeString} - ${description}` : foodTypeString;
+
             const formData = new FormData();
-            formData.append('food_type', `${category} - ${description}`);
-            formData.append('quantity', quantity);
+            formData.append('food_type', finalFoodType);
+            formData.append('quantity', quantityString);
             formData.append('location', `${location} | ${pickupTimes}`);
-            formData.append('expiry_time', new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString());
+            formData.append('expiry_time', new Date(expiryDate).toISOString());
             formData.append('description', description);
             formData.append('is_recurring', isRecurring);
             formData.append('is_urgent', isUrgent);
+
+            // Send aggregated items as JSON string for potential future use
+            const itemsForJson = items.map(item => ({
+                category: item.category,
+                quantity: item.quantity
+            }));
+            formData.append('items', JSON.stringify(itemsForJson));
+
             if (isRecurring) {
                 formData.append('frequency', frequency);
                 formData.append('day', recurringDay);
                 formData.append('destination', destination);
+                formData.append('destination_type', destinationType);
+                if (destinationName.trim()) {
+                    formData.append('destination_name', destinationName.trim());
+                }
             }
 
-            images.forEach((image) => {
-                formData.append('images', image);
+            // Send per-item images
+            items.forEach((item, index) => {
+                item.images.forEach((image) => {
+                    formData.append(`item_images_${index}`, image);
+                });
             });
 
             await api.post('/food/', formData, {
@@ -86,13 +137,17 @@ const PostFood = () => {
             });
 
             alert('Food posted successfully!');
-            setCategory('');
-            setQuantity('');
+            setItems([{ category: '', quantity: '', images: [], previews: [] }]); // Reset to default
             setDescription('');
             setPickupTimes('');
             setIsUrgent(false);
-            setImages([]);
-            setPreviews([]);
+            setDestinationType('');
+            setDestinationName('');
+            setExpiryDate(() => {
+                const date = new Date();
+                date.setHours(date.getHours() + 24);
+                return date.toISOString().slice(0, 16);
+            });
         } catch (err) {
             alert('Failed to post food.');
         } finally {
@@ -112,55 +167,109 @@ const PostFood = () => {
                         <p className="text-gray-500 text-sm mt-1">Share surplus food with those in need.</p>
                     </header>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in relative pb-20">
-                        {/* Left Column */}
-                        <div className="space-y-8">
-                            {/* Food Details */}
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                                <h3 className="text-xl font-bold mb-6 text-gray-800">Food Details</h3>
-                                {/* ... form fields ... */}
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-600 mb-2">Food Category</label>
-                                        <div className="relative">
-                                            <Utensils className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                            <input
-                                                type="text"
-                                                placeholder="e.g., Fresh Produce, Baked Goods, Canned Goods"
-                                                className="w-full border border-gray-100 bg-gray-50/50 rounded-xl pl-10 pr-4 py-3.5 focus:ring-2 focus:ring-green-500 focus:bg-white focus:outline-none transition-all text-sm"
-                                                value={category}
-                                                onChange={e => setCategory(e.target.value)}
-                                            />
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+                        <h3 className="text-xl font-bold mb-6 text-gray-800">Food Details</h3>
+                        <div className="space-y-6">
+                            <div className="space-y-3">
+                                <label className="block text-sm font-semibold text-gray-600">Donated Items</label>
+                                <div className="space-y-3">
+                                    {items.map((item, index) => (
+                                        <div key={index} className="flex flex-col md:flex-row items-center gap-3 p-3 bg-gray-50/50 rounded-2xl border border-gray-100 animate-fade-in group hover:bg-gray-50 hover:border-gray-200 transition-all">
+                                            {/* Category Input */}
+                                            <div className="w-full md:flex-[2] relative">
+                                                <Utensils className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Food Type (e.g. Rice)"
+                                                    className="w-full border border-gray-100 bg-white rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all text-sm"
+                                                    value={item.category}
+                                                    onChange={e => handleItemChange(index, 'category', e.target.value)}
+                                                />
+                                            </div>
+
+                                            {/* Quantity Input */}
+                                            <div className="w-full md:flex-1 relative">
+                                                <Scale className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Qty"
+                                                    className="w-full border border-gray-100 bg-white rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all text-sm"
+                                                    value={item.quantity}
+                                                    onChange={e => handleItemChange(index, 'quantity', e.target.value)}
+                                                />
+                                            </div>
+
+                                            {/* Photos Section */}
+                                            <div className="flex items-center gap-2 px-1">
+                                                <div className="flex gap-1.5 scrollbar-none overflow-x-auto max-w-[120px]">
+                                                    {item.previews.map((preview, imgIndex) => (
+                                                        <div key={imgIndex} className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 shadow-sm border border-white">
+                                                            <img src={preview} alt="preview" className="w-full h-full object-cover" />
+                                                            <button
+                                                                onClick={() => removeItemImage(index, imgIndex)}
+                                                                className="absolute -top-1 -right-1 bg-red-500 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <Trash2 size={8} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {item.previews.length < 4 && (
+                                                    <label className="w-10 h-10 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center hover:bg-white hover:border-green-500/50 transition-all cursor-pointer bg-white shrink-0 group/cam">
+                                                        <Camera className="text-gray-400 group-hover/cam:text-green-600" size={16} />
+                                                        <input
+                                                            type="file"
+                                                            multiple
+                                                            accept="image/*"
+                                                            onChange={(e) => handleItemImageChange(index, e)}
+                                                            className="hidden"
+                                                        />
+                                                    </label>
+                                                )}
+                                            </div>
+
+                                            {/* Remove Item Button */}
+                                            {items.length > 1 && (
+                                                <button
+                                                    onClick={() => removeItem(index)}
+                                                    className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                    title="Remove item"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-600 mb-2">Quantity</label>
-                                        <div className="relative">
-                                            <Scale className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                            <input
-                                                type="text"
-                                                placeholder="Approximate weight in kg or number of servings"
-                                                className="w-full border border-gray-100 bg-gray-50/50 rounded-xl pl-10 pr-4 py-3.5 focus:ring-2 focus:ring-green-500 focus:bg-white focus:outline-none transition-all text-sm"
-                                                value={quantity}
-                                                onChange={e => setQuantity(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-600 mb-2">Description</label>
-                                        <div className="relative">
-                                            <FileText className="absolute left-3 top-4 text-gray-400" size={18} />
-                                            <textarea
-                                                rows="4"
-                                                placeholder="Briefly describe the food items, e.g., '5kg organic apples, 2 loaves sourdough'"
-                                                className="w-full border border-gray-100 bg-gray-50/50 rounded-xl pl-10 pr-4 py-3.5 focus:ring-2 focus:ring-green-500 focus:bg-white focus:outline-none transition-all text-sm resize-none"
-                                                value={description}
-                                                onChange={e => setDescription(e.target.value)}
-                                            ></textarea>
-                                        </div>
-                                    </div>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={addItem}
+                                    className="text-xs font-bold text-green-600 hover:text-green-700 flex items-center gap-2 px-2 py-1 mt-2 transition-all hover:translate-x-1"
+                                >
+                                    + Add Another Item
+                                </button>
+                            </div>
+
+                            <div className="pt-2">
+                                <label className="block text-sm font-semibold text-gray-600 mb-2">Description</label>
+                                <div className="relative">
+                                    <FileText className="absolute left-3 top-4 text-gray-400" size={18} />
+                                    <textarea
+                                        rows="3"
+                                        placeholder="Briefly describe the food items..."
+                                        className="w-full border border-gray-100 bg-gray-50/50 rounded-xl pl-10 pr-4 py-3.5 focus:ring-2 focus:ring-green-500 focus:bg-white focus:outline-none transition-all text-sm resize-none"
+                                        value={description}
+                                        onChange={e => setDescription(e.target.value)}
+                                    ></textarea>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in relative pb-20">
+                        {/* Left Column */}
+
+                        <div className="space-y-8">
+
                             {/* Pickup Information */}
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                                 <h3 className="text-xl font-bold mb-6 text-gray-800">Pickup Information</h3>
@@ -191,37 +300,24 @@ const PostFood = () => {
                                             />
                                         </div>
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-600 mb-2">Food Expiry Date & Time</label>
+                                        <div className="relative">
+                                            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                            <input
+                                                type="datetime-local"
+                                                className="w-full border border-gray-100 bg-gray-50/50 rounded-xl pl-10 pr-4 py-3.5 focus:ring-2 focus:ring-green-500 focus:bg-white focus:outline-none transition-all text-sm"
+                                                value={expiryDate}
+                                                onChange={e => setExpiryDate(e.target.value)}
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-gray-400 mt-1 ml-1 italic">Please specify when the food will no longer be safe to consume.</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         {/* Right Column */}
                         <div className="space-y-8">
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit">
-                                <h3 className="text-xl font-bold mb-6 text-gray-800">Food Photos</h3>
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {previews.map((preview, index) => (
-                                            <div key={index} className="relative aspect-square rounded-xl overflow-hidden group">
-                                                <img src={preview} alt={`Preview ${index}`} className="w-full h-full object-cover" />
-                                                <button
-                                                    onClick={() => removeImage(index)}
-                                                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                        {previews.length < 4 && (
-                                            <label className="border-2 border-dashed border-gray-200 rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-gray-50 transition-all cursor-pointer group">
-                                                <Camera className="text-gray-400 group-hover:text-green-600 mb-2" size={24} />
-                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Add Photo</span>
-                                                <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" />
-                                            </label>
-                                        )}
-                                    </div>
-                                    <p className="text-[10px] text-gray-400 font-medium italic">Upload up to 4 clear photos of the food items.</p>
-                                </div>
-                            </div>
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                                 <h3 className="text-xl font-bold mb-2 text-gray-800">Scheduling & Urgency</h3>
                                 <div className="space-y-8 mt-6">
@@ -273,15 +369,39 @@ const PostFood = () => {
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div>
-                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Impact Destination</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="e.g., local Elders Home"
-                                                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
-                                                    value={destination}
-                                                    onChange={(e) => setDestination(e.target.value)}
-                                                />
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                                        Beneficiary Type <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <select
+                                                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer"
+                                                        value={destinationType}
+                                                        onChange={(e) => setDestinationType(e.target.value)}
+                                                    >
+                                                        <option value="">Select Type...</option>
+                                                        <option value="Elder's Home">Elder's Home</option>
+                                                        <option value="Orphanage">Orphanage</option>
+                                                        <option value="Individual">Individual</option>
+                                                        <option value="Community Center">Community Center</option>
+                                                        <option value="Shelter">Shelter</option>
+                                                    </select>
+                                                    <p className="text-[10px] text-gray-400 mt-1 ml-1">This donation will be shown to all beneficiaries of this type</p>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                                        Specific Beneficiary Name (Optional)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="e.g., St. Mary's Elder Home"
+                                                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
+                                                        value={destinationName}
+                                                        onChange={(e) => setDestinationName(e.target.value)}
+                                                    />
+                                                    <p className="text-[10px] text-gray-400 mt-1 ml-1">If specified, only this beneficiary will see the donation</p>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
