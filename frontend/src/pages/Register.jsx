@@ -123,7 +123,7 @@ const Register = () => {
 
                     {selectedRole === 'Beneficiary' && (
                         <>
-                            <InputField placeholder="Beneficiary Type (e.g. Charity, Individual)" name="beneficiaryType" value={formData.beneficiaryType} onChange={handleChange} />
+                            <InputField placeholder="Beneficiary Type (e.g. Elder's home,orphanage, Individual)" name="beneficiaryType" value={formData.beneficiaryType} onChange={handleChange} />
                             <InputField placeholder="Address" name="address" value={formData.address} onChange={handleChange} />
                             <InputField placeholder="Language preference" name="language" value={formData.language} onChange={handleChange} />
                         </>
