@@ -31,6 +31,10 @@ class User:
             "role": data['role'],         # Donor, Beneficiary, Volunteer, Admin
             "contact": data.get('contact', ""),
             "address": data.get('address', ""),
+            "businessName": data.get('businessName', ""),  # Donor-specific
+            "beneficiaryType": data.get('beneficiaryType', ""),  # Beneficiary-specific
+            "language": data.get('language', ""),  # Beneficiary-specific
+            "experience": data.get('experience', ""),  # Volunteer-specific
             "is_verified": False if data['role'] != 'Admin' else True, # Admins auto-verified for now (or manual)
             "created_at": datetime.utcnow()
         }
