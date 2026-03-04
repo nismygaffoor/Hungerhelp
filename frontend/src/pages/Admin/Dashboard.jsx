@@ -16,11 +16,26 @@ import Navbar from '../../components/Navbar';
 const Dashboard = () => {
     const { user } = useAuth();
     const [stats, setStats] = useState({
-        donations: '1,250',
-        claims: '980',
-        deliveries: '850',
-        volunteers: '150'
+        users: 0,
+        food_posts: 0,
+        deliveries: 0,
+        pending_verifications: 0
     });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await api.get('/admin/stats');
+                setStats(res.data);
+            } catch (err) {
+                console.error("Failed to fetch admin stats:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStats();
+    }, []);
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
@@ -43,10 +58,10 @@ const Dashboard = () => {
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                        <StatCard label="Total Donations" value={stats.donations} trend="+12% since last month" />
-                        <StatCard label="Total Claims" value={stats.claims} trend="+8% since last month" />
-                        <StatCard label="Total Deliveries" value={stats.deliveries} trend="+10% since last month" />
-                        <StatCard label="Active Volunteers" value={stats.volunteers} trend="Steady growth" />
+                        <StatCard label="Total Users" value={loading ? '...' : stats.users} trend="Live System Count" />
+                        <StatCard label="Food Posts" value={loading ? '...' : stats.food_posts} trend="Available Listings" />
+                        <StatCard label="Total Deliveries" value={loading ? '...' : stats.deliveries} trend="Completed Tasks" />
+                        <StatCard label="Verifications Pending" value={loading ? '...' : stats.pending_verifications} trend="Action Required" />
                     </div>
 
                     {/* Large Chart: Donation Trends */}

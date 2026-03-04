@@ -90,9 +90,10 @@ const Dashboard = () => {
                                     </div>
                                 ) : (
                                     recentDonations.map((item, i) => {
-                                        const imgSrc = item.images?.length > 0
+                                        const firstItemImage = item.items?.[0]?.images?.[0];
+                                        const imgSrc = (item.images?.length > 0)
                                             ? (item.images[0].startsWith('http') ? item.images[0] : `${backendUrl}${item.images[0]}`)
-                                            : 'https://images.unsplash.com/photo-1488459711635-de89ea219d53?w=100&h=100&fit=crop';
+                                            : (firstItemImage ? (firstItemImage.startsWith('http') ? firstItemImage : `${backendUrl}${firstItemImage}`) : 'https://images.unsplash.com/photo-1488459711635-de89ea219d53?w=100&h=100&fit=crop');
                                         const foodName = item.food_type?.split(' - ')[0] || 'Food Donation';
                                         const foodDesc = item.food_type?.split(' - ')[1] || item.quantity;
                                         const timeAgo = item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Recently';

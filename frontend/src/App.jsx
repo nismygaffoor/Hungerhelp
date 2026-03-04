@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
+import AdminLogin from './pages/Admin/AdminLogin';
 import Register from './pages/Register';
 import LandingPage from './pages/LandingPage';
 import About from './pages/About';
@@ -10,7 +11,18 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user } = useAuth();
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    // Determine if we're trying to access an ADMIN route
+    const isAdminRoute = window.location.pathname.startsWith('/admin');
+    const isAdminLoginPage = window.location.pathname === '/admin/login';
+
+    if (isAdminRoute && !isAdminLoginPage) {
+      return <Navigate to="/admin/login" replace />;
+    }
+
+    // Only redirect to public login if NOT already on an admin login page
+    if (!isAdminLoginPage) {
+      return <Navigate to="/login" replace />;
+    }
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
@@ -74,6 +86,8 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/adminlogin" element={<Navigate to="/admin/login" replace />} />
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<LandingPage />} />
           <Route path="/about" element={<About />} />

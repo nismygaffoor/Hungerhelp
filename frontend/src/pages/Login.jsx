@@ -100,10 +100,13 @@ const Login = () => {
                     </button>
                 </form>
 
-                <div className="mt-8 text-center">
+                <div className="mt-8 text-center space-y-2">
                     <p className="text-gray-500 text-sm">
-                        Don't have to account? <Link to="/register" className="text-green-700 font-bold hover:underline">Sign Up</Link>
+                        Don't have an account? <Link to="/register" className="text-green-700 font-bold hover:underline">Sign Up</Link>
                     </p>
+                    {/* <Link to="/admin/login" className="text-gray-300 text-[10px] hover:text-gray-500 transition-colors uppercase tracking-widest font-bold">
+                        Staff Login
+                    </Link> */}
                 </div>
             </div>
         </div>

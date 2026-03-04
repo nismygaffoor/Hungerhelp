@@ -39,7 +39,8 @@ def create_post():
         except:
             data['items'] = []
 
-    # Handle per-item image uploads
+    # Collect all item images into a top-level list for compatibility
+    all_images = []
     import uuid
     for i, item in enumerate(data.get('items', [])):
         item_images = []
@@ -54,10 +55,12 @@ def create_post():
                     os.makedirs(os.path.dirname(full_path), exist_ok=True)
                     file.save(full_path)
                     item_images.append(file_path)
+                    all_images.append(file_path)
         item['images'] = item_images
 
     # Add donor ID from the token
     data['donor_id'] = current_user['user_id']
+    data['images'] = all_images
     
     # Handle boolean conversion for is_recurring
     if isinstance(data.get('is_recurring'), str):

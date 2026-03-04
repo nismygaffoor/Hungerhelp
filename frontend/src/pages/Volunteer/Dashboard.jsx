@@ -35,30 +35,17 @@ const Dashboard = () => {
             <main className="flex-1 ml-0">
                 <Navbar />
 
-                <div className="flex-1 ml-0 md:ml-64 p-4 md:p-6 bg-[#F9FAFB] min-h-screen">
+                <div className="flex-1 ml-0 md:ml-64 p-4 md:p-4 bg-[#F9FAFB] min-h-screen">
                     {/* Page Header */}
-                    <div className="flex justify-between items-end mb-8 mt-2 px-2">
+                    <div className="flex justify-between items-end mb-6 mt-2 px-2">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900 leading-tight">Dashboard</h2>
                             <p className="text-gray-400 text-[11px] font-bold uppercase tracking-wider mt-1 opacity-60">System Monitoring & Stats</p>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="relative">
-                                <Bell className="text-blue-500 fill-blue-500 opacity-80" size={20} />
-                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold border-2 border-white">6</span>
-                            </div>
-                            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-gray-100 shadow-sm">
-                                <span className="text-xs font-bold text-gray-700">English</span>
-                                <ChevronDown size={14} className="text-gray-400" />
-                            </div>
-                            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm hover:scale-105 transition-transform cursor-pointer">
-                                <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=100&h=100&fit=crop" alt="User" />
-                            </div>
-                        </div>
                     </div>
 
                     {/* Top Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <TopStatCard
                             icon={<Package className="text-green-600" size={20} />}
                             value="125"
@@ -79,10 +66,10 @@ const Dashboard = () => {
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-20 px-4 max-w-7xl mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-20 px-2 max-w-7xl mx-auto">
                         {/* Recent Deliveries Column */}
-                        <div className="lg:col-span-12 xl:col-span-7 bg-white/40 rounded-[2.5rem] p-8 backdrop-blur-sm border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                            <h3 className="text-lg font-bold text-gray-900 mb-8 px-2">Recent Deliveries</h3>
+                        <div className="lg:col-span-12 xl:col-span-7 bg-white/40 rounded-[1.5rem] p-6 backdrop-blur-sm border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6 px-2">Recent Deliveries</h3>
                             <div className="space-y-6">
                                 {deliveries.map((item) => (
                                     <div key={item.id} className="flex items-center justify-between p-2 hover:bg-white/60 rounded-3xl transition-all group cursor-pointer border border-transparent hover:border-white hover:shadow-sm">
@@ -160,13 +147,13 @@ const Dashboard = () => {
 };
 
 const TopStatCard = ({ icon, value, label, subtext }) => (
-    <div className="bg-white p-10 rounded-[2.5rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center group">
-        <div className="bg-white w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-[0_6px_20px_rgba(34,197,94,0.1)] group-hover:scale-110 transition-transform">
+    <div className="bg-white p-6 rounded-[1.5rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center group">
+        <div className="bg-white w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-[0_6px_20px_rgba(34,197,94,0.1)] group-hover:scale-110 transition-transform">
             {icon}
         </div>
-        <div className="text-5xl font-black text-gray-900 mb-2 tracking-tight">{value}</div>
-        <h4 className="text-base font-bold text-gray-900 mb-2">{label}</h4>
-        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider opacity-60 leading-relaxed px-4">{subtext}</p>
+        <div className="text-4xl font-black text-gray-900 mb-1 tracking-tight">{value}</div>
+        <h4 className="text-sm font-bold text-gray-900 mb-1">{label}</h4>
+        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider opacity-60 leading-relaxed px-2">{subtext}</p>
     </div>
 );
 
