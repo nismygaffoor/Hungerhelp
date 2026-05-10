@@ -20,6 +20,8 @@ import Navbar from '../../components/Navbar';
 
 const Dashboard = () => {
     const { user } = useAuth();
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const [deliveries, setDeliveries] = useState([
         { id: 1, title: 'Total Donations', senderEmail: 'TBE TJkaagany 2024', status: 'Satics', count: '203 10aNsus', img: 'https://images.unsplash.com/photo-1488459711635-de89ea219d53?w=100&h=100&fit=crop' },
         { id: 2, title: 'Food Brtoovi Donation', senderEmail: '101f0ruaginy 20124', status: 'Sailus', count: '1 Peitus', img: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=100&h=100&fit=crop' },
@@ -30,12 +32,12 @@ const Dashboard = () => {
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
-            <Sidebar />
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-            <main className="flex-1 ml-0">
-                <Navbar />
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-                <div className="flex-1 ml-0 md:ml-64 p-4 md:p-4 bg-[#F9FAFB] min-h-screen">
+                <div className="p-4 md:p-6">
                     {/* Page Header */}
                     <div className="flex justify-between items-end mb-6 mt-2 px-2">
                         <div>

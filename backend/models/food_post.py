@@ -51,10 +51,16 @@ class FoodPost:
             ]
         }
         
-        cursor = FoodPost.collection.find(query).sort("created_at", -1)
+        cursor = FoodPost.collection.find(query).sort("_id", -1)
         posts = []
         for doc in cursor:
+            # Convert all ObjectIds and datetime objects to strings for JSON serialization
             doc['_id'] = str(doc['_id'])
+            for key, value in doc.items():
+                if isinstance(value, ObjectId):
+                    doc[key] = str(value)
+                elif isinstance(value, datetime):
+                    doc[key] = value.isoformat()
             posts.append(doc)
         return posts
 
@@ -64,10 +70,16 @@ class FoodPost:
         if is_recurring is not None:
             query["is_recurring"] = is_recurring
             
-        cursor = FoodPost.collection.find(query).sort("created_at", -1)
+        cursor = FoodPost.collection.find(query).sort("_id", -1)
         posts = []
         for doc in cursor:
+            # Convert all ObjectIds and datetime objects to strings for JSON serialization
             doc['_id'] = str(doc['_id'])
+            for key, value in doc.items():
+                if isinstance(value, ObjectId):
+                    doc[key] = str(value)
+                elif isinstance(value, datetime):
+                    doc[key] = value.isoformat()
             posts.append(doc)
         return posts
 

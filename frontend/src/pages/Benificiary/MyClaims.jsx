@@ -14,6 +14,8 @@ const MyClaims = () => {
     const { user } = useAuth();
     const [claims, setClaims] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const backendUrl = 'http://localhost:5000/uploads/';
 
     useEffect(() => {
@@ -42,13 +44,13 @@ const MyClaims = () => {
     };
 
     return (
-        <div className="flex min-h-screen bg-white font-sans">
-            <Sidebar />
+        <div className="flex min-h-screen bg-white font-sans text-gray-800">
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-            <main className="flex-1 ml-0 md:ml-64 bg-[#F9FAFB] min-h-screen">
-                <Navbar />
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-                <div className="p-6 md:p-8 max-w-7xl mx-auto">
+                <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto">
                     <header className="mb-8 text-left">
                         <h2 className="text-3xl font-bold text-gray-900 leading-tight">My claims</h2>
                     </header>

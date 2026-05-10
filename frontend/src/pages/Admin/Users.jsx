@@ -8,6 +8,8 @@ const Users = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
 
     const fetchUsers = async () => {
         try {
@@ -38,10 +40,10 @@ const Users = () => {
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
-            <Sidebar />
-            <main className="flex-1 ml-0">
-                <Navbar />
-                <div className="flex-1 ml-0 md:ml-64 p-4 md:p-6 bg-[#F9FAFB]">
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <Navbar onMenuClick={() => setSidebarOpen(true)} />
+                <div className="p-4 md:p-6 lg:p-10">
                     <header className="mb-6 text-left">
                         <h2 className="text-xl font-bold text-gray-900 leading-tight">User Management</h2>
                         <p className="text-gray-500 text-xs mt-1 transition-opacity">Oversee all registered Donors, Beneficiaries, and Volunteers.</p>

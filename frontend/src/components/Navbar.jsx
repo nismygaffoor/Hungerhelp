@@ -1,11 +1,18 @@
-import { Bell, ChevronDown } from 'lucide-react';
+import { Bell, ChevronDown, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-const Navbar = () => {
+ 
+const Navbar = ({ onMenuClick }) => {
     const { user } = useAuth();
-
+ 
     return (
-        <header className="flex justify-end items-center bg-white px-6 py-4">
+        <header className="flex justify-between items-center bg-white px-4 md:px-6 py-4">
+            {/* Mobile Menu Button */}
+            <button 
+                onClick={onMenuClick}
+                className="md:hidden p-2 text-gray-500 hover:bg-gray-50 rounded-xl transition-all"
+            >
+                <Menu size={22} />
+            </button>
             <div className="flex items-center gap-5">
                 {/* Notification Badge */}
                 <div className="relative cursor-pointer group">

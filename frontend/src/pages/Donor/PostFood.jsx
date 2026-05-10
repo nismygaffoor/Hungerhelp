@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -23,15 +23,74 @@ const PostFood = () => {
     const [isRecurring, setIsRecurring] = useState(false);
     const [frequency, setFrequency] = useState('Weekly');
     const [recurringDay, setRecurringDay] = useState('Monday');
-    const [destination, setDestination] = useState('');
     const [destinationType, setDestinationType] = useState('');
     const [destinationName, setDestinationName] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isValidBeneficiary, setIsValidBeneficiary] = useState(true);
+    const [beneficiarySearchLoading, setBeneficiarySearchLoading] = useState(false);
+    const suggestionRef = useRef(null);
     const [loading, setLoading] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const [expiryDate, setExpiryDate] = useState(() => {
         const date = new Date();
         date.setHours(date.getHours() + 24);
         return date.toISOString().slice(0, 16);
     });
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (suggestionRef.current && !suggestionRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleBeneficiarySearch = async (query) => {
+        setDestinationName(query);
+        if (query.length < 2) {
+            setSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        setBeneficiarySearchLoading(true);
+        try {
+            const res = await api.get(`/users/search-beneficiaries?q=${query}`);
+            setSuggestions(res.data);
+            setShowSuggestions(true);
+        } catch (err) {
+            console.error("Search failed", err);
+        } finally {
+            setBeneficiarySearchLoading(false);
+        }
+    };
+
+    const handleBeneficiarySelect = (beneficiary) => {
+        setDestinationName(beneficiary.name);
+        setIsValidBeneficiary(true);
+        setShowSuggestions(false);
+        // Optionally auto-set the type if it matches
+        if (beneficiary.beneficiaryType) {
+            setDestinationType(beneficiary.beneficiaryType);
+        }
+    };
+
+    const validateBeneficiary = async () => {
+        if (!destinationName.trim()) {
+            setIsValidBeneficiary(true);
+            return;
+        }
+        try {
+            const res = await api.get(`/users/verify-beneficiary?name=${encodeURIComponent(destinationName)}`);
+            setIsValidBeneficiary(res.data.valid);
+        } catch (err) {
+            console.error("Validation failed", err);
+        }
+    };
 
     const handleItemChange = (index, field, value) => {
         const newItems = [...items];
@@ -105,6 +164,8 @@ const PostFood = () => {
             formData.append('description', description);
             formData.append('is_recurring', isRecurring);
             formData.append('is_urgent', isUrgent);
+            formData.append('destination_type', destinationType);
+            formData.append('destination_name', destinationName.trim());
 
             // Send aggregated items as JSON string for potential future use
             const itemsForJson = items.map(item => ({
@@ -113,14 +174,13 @@ const PostFood = () => {
             }));
             formData.append('items', JSON.stringify(itemsForJson));
 
+            // If a specific name is provided but invalid, we might want to alert, 
+            // but for now we'll allow it or let the user decide. 
+            // The user requested "if user type non user tell him" which I've added to the UI.
+
             if (isRecurring) {
                 formData.append('frequency', frequency);
                 formData.append('day', recurringDay);
-                formData.append('destination', destination);
-                formData.append('destination_type', destinationType);
-                if (destinationName.trim()) {
-                    formData.append('destination_name', destinationName.trim());
-                }
             }
 
             // Send per-item images
@@ -156,12 +216,12 @@ const PostFood = () => {
     };
 
     return (
-        <div className="flex min-h-screen bg-white font-sans">
-            <Sidebar />
-
-            <main className="flex-1 ml-0">
-                <Navbar />
-                <div className="flex-1 ml-0 md:ml-64 p-4 md:p-6 bg-[#F9FAFB]">
+        <div className="flex min-h-screen bg-white font-sans text-gray-800">
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+ 
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <Navbar onMenuClick={() => setSidebarOpen(true)} />
+                <div className="p-4 md:p-6">
                     <header className="mb-6 text-left">
                         <h2 className="text-xl font-bold text-gray-900 leading-tight">Post Food</h2>
                         <p className="text-gray-500 text-sm mt-1">Share surplus food with those in need.</p>
@@ -337,6 +397,62 @@ const PostFood = () => {
                                         <p className="text-[11px] text-gray-400 italic">Urgent alerts notify volunteers immediately for time-sensitive food items.</p>
                                     </div>
 
+                                    <div className="space-y-4 pt-6 border-t border-gray-50">
+                                        <h4 className="text-sm font-bold text-gray-800">Target Beneficiary</h4>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                                Beneficiary Type <span className="text-red-500">*</span>
+                                            </label>
+                                            <select
+                                                className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer"
+                                                value={destinationType}
+                                                onChange={(e) => setDestinationType(e.target.value)}
+                                            >
+                                                <option value="">All Beneficiaries (Public)</option>
+                                                <option value="Elder's Home">Elder's Home</option>
+                                                <option value="Orphanage">Orphanage</option>
+                                                <option value="Individual">Individual</option>
+                                                <option value="Community Center">Community Center</option>
+                                                <option value="Shelter">Shelter</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="relative" ref={suggestionRef}>
+                                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                                Specific Beneficiary Name (Optional)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Search by name (e.g., St. Mary's)"
+                                                className={`w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 outline-none transition-all placeholder:text-gray-300 ${!isValidBeneficiary ? 'ring-2 ring-red-500/50' : 'focus:ring-green-500/20'}`}
+                                                value={destinationName}
+                                                onChange={(e) => handleBeneficiarySearch(e.target.value)}
+                                                onBlur={validateBeneficiary}
+                                            />
+                                            {!isValidBeneficiary && destinationName.trim() && (
+                                                <p className="text-[10px] text-red-500 mt-1 ml-1 font-bold animate-pulse">
+                                                    ⚠️ Not a registered beneficiary. They might not see this post.
+                                                </p>
+                                            )}
+                                            {beneficiarySearchLoading && <div className="absolute right-3 top-[38px] animate-spin h-4 w-4 border-2 border-green-500 border-t-transparent rounded-full"></div>}
+                                            
+                                            {showSuggestions && suggestions.length > 0 && (
+                                                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                                                    {suggestions.map((s) => (
+                                                        <button
+                                                            key={s._id}
+                                                            onClick={() => handleBeneficiarySelect(s)}
+                                                            className="w-full text-left px-4 py-3 hover:bg-green-50 transition-colors flex flex-col border-b border-gray-50 last:border-0"
+                                                        >
+                                                            <span className="text-sm font-bold text-gray-800">{s.name}</span>
+                                                            <span className="text-[10px] text-gray-400 uppercase font-black tracking-tight">{s.beneficiaryType || 'Beneficiary'}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     {isRecurring && (
                                         <div className="space-y-4 pt-4 border-t border-gray-50 animate-in fade-in slide-in-from-top-2 duration-300">
                                             <div className="grid grid-cols-2 gap-4">
@@ -367,40 +483,6 @@ const PostFood = () => {
                                                         <option>Saturday</option>
                                                         <option>Sunday</option>
                                                     </select>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                                        Beneficiary Type <span className="text-red-500">*</span>
-                                                    </label>
-                                                    <select
-                                                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer"
-                                                        value={destinationType}
-                                                        onChange={(e) => setDestinationType(e.target.value)}
-                                                    >
-                                                        <option value="">Select Type...</option>
-                                                        <option value="Elder's Home">Elder's Home</option>
-                                                        <option value="Orphanage">Orphanage</option>
-                                                        <option value="Individual">Individual</option>
-                                                        <option value="Community Center">Community Center</option>
-                                                        <option value="Shelter">Shelter</option>
-                                                    </select>
-                                                    <p className="text-[10px] text-gray-400 mt-1 ml-1">This donation will be shown to all beneficiaries of this type</p>
-                                                </div>
-
-                                                <div>
-                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                                        Specific Beneficiary Name (Optional)
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="e.g., St. Mary's Elder Home"
-                                                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
-                                                        value={destinationName}
-                                                        onChange={(e) => setDestinationName(e.target.value)}
-                                                    />
-                                                    <p className="text-[10px] text-gray-400 mt-1 ml-1">If specified, only this beneficiary will see the donation</p>
                                                 </div>
                                             </div>
                                         </div>

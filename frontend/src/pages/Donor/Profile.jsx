@@ -6,6 +6,8 @@ import { useAuth } from '../../context/AuthContext';
 
 const Profile = () => {
     const { user } = useAuth();
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const [profileData, setProfileData] = useState({
         fullName: 'Dr. John Doe',
         email: user?.email || 'john.doe@example.com',
@@ -15,10 +17,10 @@ const Profile = () => {
     });
 
     return (
-        <div className="flex min-h-screen bg-[#F9FAFB] font-sans">
-            <Sidebar />
-            <main className="flex-1 ml-0 md:ml-64">
-                <Navbar />
+        <div className="flex min-h-screen bg-white font-sans text-gray-800">
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <Navbar onMenuClick={() => setSidebarOpen(true)} />
                 <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
                     {/* Header Section */}
                     <div className="bg-white rounded-3xl p-6 mb-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8">

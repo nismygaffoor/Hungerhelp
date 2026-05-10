@@ -15,6 +15,8 @@ import Navbar from '../../components/Navbar';
 
 const Dashboard = () => {
     const { user } = useAuth();
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const [stats, setStats] = useState({
         users: 0,
         food_posts: 0,
@@ -39,12 +41,12 @@ const Dashboard = () => {
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
-            <Sidebar />
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-            <main className="flex-1 ml-0">
-                <Navbar />
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-                <div className="flex-1 ml-0 md:ml-64 p-4 md:p-6 bg-[#F9FAFB]">
+                <div className="p-4 md:p-6">
                     <div className="flex justify-between items-end mb-6">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900 leading-tight">Admin Dashboard</h2>

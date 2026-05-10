@@ -22,6 +22,8 @@ const Dashboard = () => {
     const [upcomingDonations, setUpcomingDonations] = useState([]);
     const [monthlyData, setMonthlyData] = useState([0, 0, 0, 0, 0, 0]);
     const [loading, setLoading] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const backendUrl = 'http://localhost:5000/uploads/';
 
     useEffect(() => {
@@ -49,12 +51,12 @@ const Dashboard = () => {
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
-            <Sidebar />
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-            <main className="flex-1 ml-0">
-                <Navbar />
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-                <div className="flex-1 ml-0 md:ml-64 p-4 md:p-6 bg-[#F9FAFB]">
+                <div className="p-4 md:p-6">
                     {/* Stats Section */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         {[
@@ -199,8 +201,8 @@ const Dashboard = () => {
                                 {action.label}
                             </button>
                         ))}
+                        </div>
                     </div>
-                </div>
             </main>
         </div>
     );

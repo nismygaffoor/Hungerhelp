@@ -21,6 +21,8 @@ const MyDonations = () => {
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const backendUrl = 'http://localhost:5000/uploads/';
 
     useEffect(() => {
@@ -56,48 +58,48 @@ const MyDonations = () => {
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
-            <Sidebar />
-
-            <main className="flex-1 ml-0 md:ml-64 bg-[#F9FAFB] min-h-screen">
-                <Navbar />
-
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+ 
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <Navbar onMenuClick={() => setSidebarOpen(true)} />
+ 
                 <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
                     {/* Page Header */}
                     <div className="flex justify-between items-end mb-6 mt-2 px-2">
                         <div>
-                            <h2 className="text-2xl font-black text-gray-900 leading-tight">My Donations</h2>
-                            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1 opacity-60">Impact & History Tracking</p>
+                            <h2 className="text-xl font-black text-gray-900 leading-tight">My Donations</h2>
+                            <p className="text-gray-400 text-[9px] font-black uppercase tracking-widest mt-0.5 opacity-60">Impact & History Tracking</p>
                         </div>
                     </div>
 
                     {/* Filter Controls */}
-                    <div className="flex flex-col md:flex-row gap-4 mb-8 px-2">
-                        <div className="flex gap-4">
-                            <div className="relative group min-w-[140px]">
-                                <select className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none">
+                    <div className="flex flex-col md:flex-row gap-3 mb-6 px-2">
+                        <div className="flex gap-3">
+                            <div className="relative group min-w-[130px]">
+                                <select className="w-full bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none">
                                     <option>All Status</option>
                                     <option>Available</option>
                                     <option>Pending</option>
                                     <option>Delivered</option>
                                 </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                             </div>
-                            <div className="relative group min-w-[140px]">
-                                <select className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none">
+                            <div className="relative group min-w-[130px]">
+                                <select className="w-full bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none">
                                     <option>Food Type</option>
                                     <option>Vegetables</option>
                                     <option>Baked Goods</option>
                                     <option>Canned Food</option>
                                 </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                             </div>
                         </div>
                         <div className="flex-1 relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                             <input
                                 type="text"
                                 placeholder="Search by item name or location..."
-                                className="w-full bg-white border border-gray-100 rounded-xl pl-12 pr-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
+                                className="w-full bg-white border border-gray-100 rounded-xl pl-10 pr-4 py-2 text-xs font-medium text-gray-700 shadow-sm focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
                             />
                         </div>
                     </div>
@@ -132,14 +134,14 @@ const MyDonations = () => {
                         )}
                     </div>
                 </div>
-
-                <EditDonationModal
-                    isOpen={isEditing}
-                    onClose={() => setIsEditing(false)}
-                    item={selectedItem}
-                    onUpdate={fetchMyPosts}
-                />
             </main>
+
+            <EditDonationModal
+                isOpen={isEditing}
+                onClose={() => setIsEditing(false)}
+                item={selectedItem}
+                onUpdate={fetchMyPosts}
+            />
         </div>
     );
 };
@@ -161,10 +163,10 @@ const DonationCard = ({ post, onEdit, onDelete, onView, backendUrl }) => {
     return (
         <div
             onClick={onView}
-            className="bg-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col lg:flex-row items-center gap-6 group cursor-pointer"
+            className="bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgb(0,0,0,0.02)] border border-white hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col lg:flex-row items-center gap-5 group cursor-pointer"
         >
             {/* 4-Image Grid Thumbnail */}
-            <div className="w-full lg:w-40 aspect-square rounded-2xl overflow-hidden grid grid-cols-2 gap-0.5 shadow-md group-hover:scale-105 transition-transform duration-500 flex-shrink-0">
+            <div className="w-full lg:w-32 aspect-square rounded-xl overflow-hidden grid grid-cols-2 gap-0.5 shadow-sm group-hover:scale-105 transition-transform duration-500 flex-shrink-0">
                 {displayImages.slice(0, 4).map((img, i) => (
                     <img
                         key={i}
@@ -176,9 +178,9 @@ const DonationCard = ({ post, onEdit, onDelete, onView, backendUrl }) => {
             </div>
 
             {/* Content Details */}
-            <div className="flex-1 text-center lg:text-left space-y-1">
-                <h4 className="text-lg font-black text-gray-900 leading-tight group-hover:text-green-700 transition-colors uppercase tracking-tight">
-                    {post.food_type.split(' - ')[0]}
+            <div className="flex-1 text-center lg:text-left space-y-0.5">
+                <h4 className="text-base font-black text-gray-900 leading-tight group-hover:text-green-700 transition-colors uppercase tracking-tight">
+                    {post.food_type?.split(' - ')[0] || 'Food Donation'}
                 </h4>
                 <div className="flex flex-wrap justify-center lg:justify-start gap-3">
                     {/* <p className="text-xs font-bold text-gray-400 opacity-80 uppercase tracking-widest leading-relaxed">
@@ -191,7 +193,7 @@ const DonationCard = ({ post, onEdit, onDelete, onView, backendUrl }) => {
                 <div className="pt-2 flex flex-col gap-1">
                     <p className="text-xs font-black text-gray-700 uppercase tracking-tight">
                         <span className="text-gray-400 font-bold normal-case">Pickup location </span>
-                        {post.location.split(' | ')[0]}
+                        {post.location?.split(' | ')[0] || 'N/A'}
                     </p>
                     {post.expiry_time && !post.is_recurring && (
                         <p className="text-[10px] font-bold text-amber-600 flex items-center gap-1">
@@ -235,24 +237,24 @@ const DonationCard = ({ post, onEdit, onDelete, onView, backendUrl }) => {
                     </span>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                     <button
                         onClick={(e) => { e.stopPropagation(); onView(); }}
-                        className="bg-[#D1D5DB] text-gray-700 px-5 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-300 transition-all active:scale-95"
+                        className="bg-[#D1D5DB] text-gray-700 px-4 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest hover:bg-gray-300 transition-all active:scale-95"
                     >
                         View Details
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                        className="p-2.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                        className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                     >
-                        <Edit2 size={16} />
+                        <Edit2 size={14} />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                        className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                     >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                     </button>
                 </div>
             </div>

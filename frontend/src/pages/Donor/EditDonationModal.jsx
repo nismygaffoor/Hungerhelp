@@ -238,7 +238,10 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                                             <option>Sunday</option>
                                         </select>
                                     </div>
-                                    <div className="col-span-2">
+                            <div className="col-span-2 pt-4 border-t border-gray-50">
+                                <h4 className="text-sm font-bold text-gray-800 mb-4">Target Beneficiary</h4>
+                                <div className="space-y-4">
+                                    <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
                                             Beneficiary Type <span className="text-red-500">*</span>
                                         </label>
@@ -247,7 +250,7 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                                             value={formData.destination_type}
                                             onChange={(e) => setFormData({ ...formData, destination_type: e.target.value })}
                                         >
-                                            <option value="">Select Type...</option>
+                                            <option value="">All Beneficiaries</option>
                                             <option value="Elder's Home">Elder's Home</option>
                                             <option value="Orphanage">Orphanage</option>
                                             <option value="Individual">Individual</option>
@@ -256,7 +259,7 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                                         </select>
                                         <p className="text-[10px] text-gray-400 mt-1 ml-1">This donation will be shown to all beneficiaries of this type</p>
                                     </div>
-                                    <div className="col-span-2">
+                                    <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
                                             Specific Beneficiary Name (Optional)
                                         </label>
@@ -269,6 +272,8 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                                         />
                                         <p className="text-[10px] text-gray-400 mt-1 ml-1">If specified, only this beneficiary will see the donation</p>
                                     </div>
+                                </div>
+                            </div>
                                 </>
                             )}
                         </div>

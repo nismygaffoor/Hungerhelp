@@ -25,6 +25,8 @@ const DonationDetail = () => {
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const backendUrl = 'http://localhost:5000/uploads/';
 
     useEffect(() => {
@@ -63,9 +65,9 @@ const DonationDetail = () => {
     if (loading) {
         return (
             <div className="flex min-h-screen bg-white font-sans text-gray-800">
-                <Sidebar />
-                <main className="flex-1 ml-0 md:ml-64 bg-[#F9FAFB] min-h-screen">
-                    <Navbar />
+                <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+                <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                    <Navbar onMenuClick={() => setSidebarOpen(true)} />
                     <div className="flex items-center justify-center h-[80vh]">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
                     </div>
@@ -101,12 +103,12 @@ const DonationDetail = () => {
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
-            <Sidebar />
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-            <main className="flex-1 ml-0 md:ml-64 bg-[#F9FAFB] min-h-screen">
-                <Navbar />
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-                <div className="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
+                <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto">
                     {/* Back Button */}
                     <button
                         onClick={() => navigate('/donor/history')}

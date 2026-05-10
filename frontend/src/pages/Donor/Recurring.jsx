@@ -11,6 +11,8 @@ const Recurring = () => {
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const backendUrl = 'http://localhost:5000/uploads/';
     const navigate = useNavigate();
 
@@ -87,10 +89,10 @@ const Recurring = () => {
     };
 
     return (
-        <div className="flex min-h-screen bg-[#F9FAFB] font-sans">
-            <Sidebar />
-            <main className="flex-1 ml-0 md:ml-64">
-                <Navbar />
+        <div className="flex min-h-screen bg-white font-sans text-gray-800">
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <Navbar onMenuClick={() => setSidebarOpen(true)} />
                 <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto">
                     <header className="mb-8">
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">Manage Recurring Donations</h1>

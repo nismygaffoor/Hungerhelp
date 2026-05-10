@@ -18,6 +18,8 @@ const Dashboard = () => {
     const [stats, setStats] = useState({ totalClaimed: 0, pendingPickups: 0, delivered: 0 });
     const [recentClaims, setRecentClaims] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -39,18 +41,18 @@ const Dashboard = () => {
     }, []);
 
     return (
-        <div className="flex min-h-screen bg-white font-sans">
-            <Sidebar />
+        <div className="flex min-h-screen bg-white font-sans text-gray-800">
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-            <main className="flex-1 ml-0">
-                <Navbar />
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-                <div className="flex-1 ml-0 md:ml-64 p-4 md:p-6 bg-[#F9FAFB]">
+                <div className="p-4 md:p-6">
                     <header className="mb-6 text-left">
                         <h2 className="text-xl font-bold text-gray-900 leading-tight">Beneficiary Dashboard</h2>
                         <p className="text-gray-500 text-xs mt-1">Access fresh food and manage your claims easily.</p>
                     </header>
-
+                    {/* ... rest of the content ... */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 relative">
                         {/* Recent Claims Card */}
                         <div className="bg-white p-7 rounded-2xl shadow-sm border border-gray-100 min-h-[300px]">

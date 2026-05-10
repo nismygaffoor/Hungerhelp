@@ -49,3 +49,29 @@ class User:
     @staticmethod
     def verify_password(stored_password, provided_password):
         return bcrypt.checkpw(provided_password.encode('utf-8'), stored_password)
+
+    @staticmethod
+    def search_beneficiaries(query):
+        """Search for users with role 'Beneficiary' by name (partial match)."""
+        if not query:
+            return []
+        
+        # Case-insensitive partial match
+        cursor = User.collection.find({
+            "role": "Beneficiary",
+            "name": {"$regex": query, "$options": "i"}
+        }, {"password": 0}).limit(10)
+        
+        users = []
+        for u in cursor:
+            u['_id'] = str(u['_id'])
+            users.append(u)
+        return users
+
+    @staticmethod
+    def find_beneficiary_by_name(name):
+        """Find a beneficiary by exact name."""
+        return User.collection.find_one({
+            "role": "Beneficiary",
+            "name": name
+        }, {"password": 0})

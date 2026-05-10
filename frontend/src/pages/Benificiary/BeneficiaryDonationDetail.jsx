@@ -22,6 +22,8 @@ const BeneficiaryDonationDetail = () => {
     const [donation, setDonation] = useState(null);
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const backendUrl = 'http://localhost:5000/uploads/';
 
     // Determine back link based on state or default to /beneficiary/claim
@@ -73,9 +75,9 @@ const BeneficiaryDonationDetail = () => {
     if (loading) {
         return (
             <div className="flex min-h-screen bg-white font-sans text-gray-800">
-                <Sidebar />
-                <main className="flex-1 ml-0 md:ml-64 bg-[#F9FAFB] min-h-screen">
-                    <Navbar />
+                <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+                <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                    <Navbar onMenuClick={() => setSidebarOpen(true)} />
                     <div className="flex items-center justify-center h-[80vh]">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
                     </div>
@@ -103,12 +105,12 @@ const BeneficiaryDonationDetail = () => {
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
-            <Sidebar />
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-            <main className="flex-1 ml-0 md:ml-64 bg-[#F9FAFB] min-h-screen">
-                <Navbar />
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-                <div className="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
+                <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto">
                     {/* Back Button */}
                     <button
                         onClick={() => navigate(backPath)}
