@@ -68,6 +68,10 @@ def create_post():
     
     if isinstance(data.get('is_urgent'), str):
         data['is_urgent'] = data['is_urgent'].lower() == 'true'
+
+    # Recurring posts should start as 'Active', not 'Available'
+    if data.get('is_recurring'):
+        data['status'] = 'Active'
         
     post_id = FoodPost.create(data)
     return jsonify({"message": "Food post created", "post_id": post_id}), 201
@@ -346,6 +350,13 @@ def update_post(post_id):
     
     if isinstance(data.get('is_urgent'), str):
         data['is_urgent'] = data['is_urgent'].lower() == 'true'
+
+    # If converting to recurring, automatically set status to Active
+    if data.get('is_recurring') is True and 'status' not in data:
+        data['status'] = 'Active'
+    # If converting back to non-recurring, set status back to Available
+    elif data.get('is_recurring') is False and 'status' not in data:
+        data['status'] = 'Available'
     
     # Parse items if present (sent as JSON string from frontend)
     import json

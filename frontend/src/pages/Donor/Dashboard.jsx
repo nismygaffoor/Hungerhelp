@@ -53,7 +53,7 @@ const Dashboard = () => {
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
             <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-white min-h-screen`}>
                 <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
                 <div className="p-4 md:p-6">

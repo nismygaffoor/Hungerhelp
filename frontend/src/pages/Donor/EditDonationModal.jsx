@@ -210,40 +210,48 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                             {formData.is_recurring && (
                                 <>
                                     <div>
-                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Frequency</label>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Frequency <span className="text-red-500">*</span></label>
                                         <select
-                                            className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer"
+                                            required
+                                            className={`w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer ${!formData.frequency ? 'text-red-400' : 'text-gray-700'}`}
                                             value={formData.frequency}
                                             onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
                                         >
-                                            <option>Daily</option>
-                                            <option>Weekly</option>
-                                            <option>Monthly</option>
+                                            <option value="">⚠️ Select frequency...</option>
+                                            <option value="Daily">Daily</option>
+                                            <option value="Weekly">Weekly</option>
+                                            <option value="Monthly">Monthly</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Day</label>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Day <span className="text-red-500">*</span></label>
                                         <select
-                                            className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer"
+                                            required
+                                            className={`w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer ${!formData.day ? 'text-red-400' : 'text-gray-700'}`}
                                             value={formData.day}
                                             onChange={(e) => setFormData({ ...formData, day: e.target.value })}
                                         >
-                                            <option>Everyday</option>
-                                            <option>Monday</option>
-                                            <option>Tuesday</option>
-                                            <option>Wednesday</option>
-                                            <option>Thursday</option>
-                                            <option>Friday</option>
-                                            <option>Saturday</option>
-                                            <option>Sunday</option>
+                                            <option value="">⚠️ Select day...</option>
+                                            <option value="Everyday">Everyday</option>
+                                            <option value="Monday">Monday</option>
+                                            <option value="Tuesday">Tuesday</option>
+                                            <option value="Wednesday">Wednesday</option>
+                                            <option value="Thursday">Thursday</option>
+                                            <option value="Friday">Friday</option>
+                                            <option value="Saturday">Saturday</option>
+                                            <option value="Sunday">Sunday</option>
                                         </select>
                                     </div>
-                            <div className="col-span-2 pt-4 border-t border-gray-50">
+                                </>
+                            )}
+
+                            {/* Target Beneficiary — always visible for all donation types */}
+                            <div className="col-span-2 pt-4 border-t border-gray-100">
                                 <h4 className="text-sm font-bold text-gray-800 mb-4">Target Beneficiary</h4>
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                            Beneficiary Type <span className="text-red-500">*</span>
+                                            Beneficiary Type
                                         </label>
                                         <select
                                             className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer"
@@ -257,7 +265,11 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                                             <option value="Community Center">Community Center</option>
                                             <option value="Shelter">Shelter</option>
                                         </select>
-                                        <p className="text-[10px] text-gray-400 mt-1 ml-1">This donation will be shown to all beneficiaries of this type</p>
+                                        <p className="text-[10px] text-gray-400 mt-1 ml-1">
+                                            {formData.destination_type
+                                                ? `Only ${formData.destination_type} beneficiaries will see this donation`
+                                                : 'Visible to all beneficiaries on the platform'}
+                                        </p>
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
@@ -274,8 +286,6 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                                     </div>
                                 </div>
                             </div>
-                                </>
-                            )}
                         </div>
 
                         <div className="flex flex-col gap-4 pt-2">
@@ -283,7 +293,19 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                                 <span className="text-sm font-bold text-gray-700">Set as recurring donation</span>
                                 <button
                                     type="button"
-                                    onClick={() => setFormData({ ...formData, is_recurring: !formData.is_recurring })}
+                                    onClick={() => setFormData({ 
+                                        ...formData, 
+                                        is_recurring: !formData.is_recurring,
+                                        // When switching to recurring, reset frequency/day so user must choose
+                                        // and set status to Active
+                                        ...(!formData.is_recurring ? { 
+                                            frequency: '', 
+                                            day: '',
+                                            status: 'Active'
+                                        } : {
+                                            status: 'Available'
+                                        })
+                                    })}
                                     className={`w-12 h-6 rounded-full relative transition-colors ${formData.is_recurring ? 'bg-green-600' : 'bg-gray-300'}`}
                                 >
                                     <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${formData.is_recurring ? 'left-7' : 'left-1'}`}></div>

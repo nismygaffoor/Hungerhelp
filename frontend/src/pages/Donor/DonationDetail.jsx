@@ -66,7 +66,7 @@ const DonationDetail = () => {
         return (
             <div className="flex min-h-screen bg-white font-sans text-gray-800">
                 <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-                <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+                <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'} bg-white min-h-screen`}>
                     <Navbar onMenuClick={() => setSidebarOpen(true)} />
                     <div className="flex items-center justify-center h-[80vh]">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
@@ -93,19 +93,24 @@ const DonationDetail = () => {
     const images = (donation.images && donation.images.length > 0) ? donation.images : allItemImages;
     const hasImages = images.length > 0;
 
+    // Recurring posts stored as 'Available' should display as 'Active'
+    const displayStatus = (donation.is_recurring && donation.status === 'Available') ? 'Active' : donation.status;
+
     const statusColors = {
         'Available': 'bg-green-100 text-green-700',
         'Active': 'bg-blue-100 text-blue-700',
+        'Paused': 'bg-amber-100 text-amber-700',
         'Pending Pickup': 'bg-[#98E158] text-white',
         'Delivered': 'bg-purple-100 text-purple-700',
-        'Cancelled': 'bg-red-100 text-red-700'
+        'Cancelled': 'bg-red-100 text-red-700',
+        'Expired': 'bg-gray-100 text-gray-500'
     };
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
             <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-white min-h-screen`}>
                 <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
                 <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto">
@@ -286,8 +291,8 @@ const DonationDetail = () => {
                             {/* Status Card */}
                             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-50">
                                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Status</h3>
-                                <div className={`px-4 py-3 rounded-xl font-bold text-sm ${statusColors[donation.status] || 'bg-gray-100 text-gray-700'}`}>
-                                    {donation.status || 'Available'}
+                                <div className={`px-4 py-3 rounded-xl font-bold text-sm ${statusColors[displayStatus] || 'bg-gray-100 text-gray-700'}`}>
+                                    {displayStatus || 'Available'}
                                 </div>
                             </div>
 

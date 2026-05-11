@@ -60,21 +60,16 @@ const MyDonations = () => {
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
             <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
  
-            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-[#F9FAFB] min-h-screen`}>
+            <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-white min-h-screen`}>
                 <Navbar onMenuClick={() => setSidebarOpen(true)} />
  
                 <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-                    {/* Page Header */}
-                    <div className="flex justify-between items-end mb-6 mt-2 px-2">
-                        <div>
-                            <h2 className="text-xl font-black text-gray-900 leading-tight">My Donations</h2>
-                            <p className="text-gray-400 text-[9px] font-black uppercase tracking-widest mt-0.5 opacity-60">Impact & History Tracking</p>
-                        </div>
-                    </div>
+                    {/* Page Header + Filters */}
+                    <div className="flex flex-col gap-4 mb-8 mt-2 px-2">
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">My Donations</h1>
 
-                    {/* Filter Controls */}
-                    <div className="flex flex-col md:flex-row gap-3 mb-6 px-2">
-                        <div className="flex gap-3">
+                        {/* Filters — right aligned on second line */}
+                        <div className="flex items-center justify-end gap-3 flex-wrap">
                             <div className="relative group min-w-[130px]">
                                 <select className="w-full bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none">
                                     <option>All Status</option>
@@ -93,14 +88,14 @@ const MyDonations = () => {
                                 </select>
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                             </div>
-                        </div>
-                        <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Search by item name or location..."
-                                className="w-full bg-white border border-gray-100 rounded-xl pl-10 pr-4 py-2 text-xs font-medium text-gray-700 shadow-sm focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
-                            />
+                            <div className="relative min-w-[200px]">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                                <input
+                                    type="text"
+                                    placeholder="Search donations..."
+                                    className="w-full bg-white border border-gray-100 rounded-xl pl-9 pr-4 py-2 text-xs font-bold text-gray-700 shadow-sm focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -163,7 +158,7 @@ const DonationCard = ({ post, onEdit, onDelete, onView, backendUrl }) => {
     return (
         <div
             onClick={onView}
-            className="bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgb(0,0,0,0.02)] border border-white hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col lg:flex-row items-center gap-5 group cursor-pointer"
+            className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col lg:flex-row items-center gap-5 group cursor-pointer"
         >
             {/* 4-Image Grid Thumbnail */}
             <div className="w-full lg:w-32 aspect-square rounded-xl overflow-hidden grid grid-cols-2 gap-0.5 shadow-sm group-hover:scale-105 transition-transform duration-500 flex-shrink-0">
@@ -227,14 +222,24 @@ const DonationCard = ({ post, onEdit, onDelete, onView, backendUrl }) => {
                             🎯 {post.destination_name ? post.destination_name : `All ${post.destination_type}s`}
                         </span>
                     )}
-                    <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${post.status === 'Available' || post.status === 'Active'
-                            ? 'bg-[#E8F5E9] text-[#2E7D32]'
-                            : post.status === 'Pending Pickup'
-                                ? 'bg-[#98E158] text-white'
-                                : 'bg-[#43A047] text-white'
-                        }`}>
-                        {post.status}
-                    </span>
+                    {(() => {
+                        const displayStatus = (post.is_recurring && post.status === 'Available') ? 'Active' : post.status;
+                        return (
+                            <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${
+                                displayStatus === 'Available'
+                                    ? 'bg-[#E8F5E9] text-[#2E7D32]'
+                                    : displayStatus === 'Active'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : displayStatus === 'Paused'
+                                            ? 'bg-amber-100 text-amber-700'
+                                            : displayStatus === 'Pending Pickup'
+                                                ? 'bg-[#98E158] text-white'
+                                                : 'bg-[#43A047] text-white'
+                            }`}>
+                                {displayStatus}
+                            </span>
+                        );
+                    })()}
                 </div>
 
                 <div className="flex items-center gap-2">
