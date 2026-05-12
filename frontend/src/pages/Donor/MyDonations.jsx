@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
@@ -8,7 +8,8 @@ import {
     ChevronDown,
     Search,
     Edit2,
-    Clock
+    Clock,
+    MoreVertical
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
@@ -23,6 +24,12 @@ const MyDonations = () => {
     const [selectedItem, setSelectedItem] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(true);
+    
+    // Filter States
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All Status');
+    const [typeFilter, setTypeFilter] = useState('Food Type');
+    
     const backendUrl = 'http://localhost:5000/uploads/';
 
     useEffect(() => {
@@ -40,6 +47,29 @@ const MyDonations = () => {
             setLoading(false);
         }
     };
+
+    const filteredPosts = myPosts.filter(post => {
+        // Status Filter
+        const isExpired = post.expiry_time && new Date(post.expiry_time) < new Date();
+        const effectiveStatus = (isExpired && post.status === 'Available') ? 'Expired' : post.status;
+        
+        const matchesStatus = statusFilter === 'All Status' || effectiveStatus === statusFilter;
+        
+        // Type Filter
+        const matchesType = typeFilter === 'Food Type' || 
+            (post.items?.some(item => item.category === typeFilter)) ||
+            (post.food_type?.split(' - ')[0] === typeFilter);
+
+        // Search Filter
+        const matchesSearch = searchTerm === '' || 
+            (post.food_type?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (post.items?.some(item => 
+                item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                item.category?.toLowerCase().includes(searchTerm.toLowerCase())
+            ));
+
+        return matchesStatus && matchesType && matchesSearch;
+    });
 
     const handleDelete = async (id) => {
         if (!confirm("Delete this donation?")) return;
@@ -71,20 +101,38 @@ const MyDonations = () => {
                         {/* Filters — right aligned on second line */}
                         <div className="flex items-center justify-end gap-3 flex-wrap">
                             <div className="relative group min-w-[130px]">
-                                <select className="w-full bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none">
+                                <select 
+                                    className={`w-full bg-white border rounded-xl px-3 py-2 text-xs font-bold shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none ${statusFilter !== 'All Status' ? 'border-green-600 text-green-600' : 'border-gray-100 text-gray-700'}`}
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                >
                                     <option>All Status</option>
                                     <option>Available</option>
-                                    <option>Pending</option>
+                                    <option>Claimed</option>
+                                    <option>Pending Pickup</option>
+                                    <option>In Transit</option>
                                     <option>Delivered</option>
+                                    <option>Expired</option>
                                 </select>
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                             </div>
                             <div className="relative group min-w-[130px]">
-                                <select className="w-full bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none">
+                                <select 
+                                    className={`w-full bg-white border rounded-xl px-3 py-2 text-xs font-bold shadow-sm appearance-none cursor-pointer focus:ring-2 focus:ring-green-500/20 transition-all outline-none ${typeFilter !== 'Food Type' ? 'border-green-600 text-green-600' : 'border-gray-100 text-gray-700'}`}
+                                    value={typeFilter}
+                                    onChange={(e) => setTypeFilter(e.target.value)}
+                                >
                                     <option>Food Type</option>
                                     <option>Vegetables</option>
+                                    <option>Fruits</option>
+                                    <option>Cooked Meals</option>
                                     <option>Baked Goods</option>
+                                    <option>Grains & Rice</option>
+                                    <option>Dairy</option>
+                                    <option>Meat & Poultry</option>
                                     <option>Canned Food</option>
+                                    <option>Beverages</option>
+                                    <option>Other</option>
                                 </select>
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                             </div>
@@ -92,8 +140,10 @@ const MyDonations = () => {
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                                 <input
                                     type="text"
-                                    placeholder="Search donations..."
+                                    placeholder="Search items or donors..."
                                     className="w-full bg-white border border-gray-100 rounded-xl pl-9 pr-4 py-2 text-xs font-bold text-gray-700 shadow-sm focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -105,17 +155,23 @@ const MyDonations = () => {
                             <div className="flex items-center justify-center p-20 bg-white rounded-[2.5rem] shadow-sm border border-white">
                                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
                             </div>
-                        ) : myPosts.length === 0 ? (
+                        ) : filteredPosts.length === 0 ? (
                             <div className="p-20 text-center flex flex-col items-center bg-white rounded-[2.5rem] shadow-sm border border-white">
                                 <div className="bg-gray-50 w-24 h-24 rounded-full flex items-center justify-center mb-6">
                                     <Search size={48} className="text-gray-200" />
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-800 mb-2">No donations found</h3>
-                                <p className="text-gray-400 font-medium max-w-xs mx-auto">You haven't posted any donations yet. Your impact history will appear here.</p>
+                                <p className="text-gray-400 font-medium max-w-xs mx-auto">Try adjusting your filters or search terms to find what you're looking for.</p>
+                                <button 
+                                    onClick={() => {setSearchTerm(''); setStatusFilter('All Status'); setTypeFilter('Food Type');}}
+                                    className="mt-4 text-green-600 font-bold text-sm hover:underline"
+                                >
+                                    Clear all filters
+                                </button>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 gap-6">
-                                {myPosts.map(post => (
+                                {filteredPosts.map(post => (
                                     <DonationCard
                                         key={post._id}
                                         post={post}
@@ -142,6 +198,19 @@ const MyDonations = () => {
 };
 
 const DonationCard = ({ post, onEdit, onDelete, onView, backendUrl }) => {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef();
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     // Collect images from all items
     const items = post.items || [];
     let displayImages = items.flatMap(item => item.images || []);
@@ -156,12 +225,9 @@ const DonationCard = ({ post, onEdit, onDelete, onView, backendUrl }) => {
     }
 
     return (
-        <div
-            onClick={onView}
-            className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col lg:flex-row items-center gap-5 group cursor-pointer"
-        >
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 flex flex-col md:flex-row items-center gap-6 group relative">
             {/* 4-Image Grid Thumbnail */}
-            <div className="w-full lg:w-32 aspect-square rounded-xl overflow-hidden grid grid-cols-2 gap-0.5 shadow-sm group-hover:scale-105 transition-transform duration-500 flex-shrink-0">
+            <div className="w-32 h-32 rounded-2xl overflow-hidden grid grid-cols-2 gap-0.5 shadow-sm group-hover:scale-105 transition-transform duration-500 flex-shrink-0 bg-gray-50 border border-gray-50">
                 {displayImages.slice(0, 4).map((img, i) => (
                     <img
                         key={i}
@@ -173,94 +239,114 @@ const DonationCard = ({ post, onEdit, onDelete, onView, backendUrl }) => {
             </div>
 
             {/* Content Details */}
-            <div className="flex-1 text-center lg:text-left space-y-0.5">
-                <h4 className="text-base font-black text-gray-900 leading-tight group-hover:text-green-700 transition-colors uppercase tracking-tight">
-                    {post.food_type?.split(' - ')[0] || 'Food Donation'}
-                </h4>
-                <div className="flex flex-wrap justify-center lg:justify-start gap-3">
-                    {/* <p className="text-xs font-bold text-gray-400 opacity-80 uppercase tracking-widest leading-relaxed">
-                        {post.food_type.split(' - ')[1] || 'Fresh Items'}
-                    </p> */}
-                    <p className="text-xs font-bold text-gray-400 opacity-80 uppercase tracking-widest leading-relaxed">
-                        {post.quantity}
-                    </p>
+            <div className="flex-1 text-left">
+                <div className="mb-2">
+                    {items.length > 0 ? (
+                        <div className="space-y-1">
+                            {items.slice(0, 3).map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-1.5">
+                                    <span className="text-[9px] font-black text-green-600 uppercase tracking-tighter bg-green-50 px-1.5 py-0.5 rounded">
+                                        {item.category}
+                                    </span>
+                                    <h4 className="text-sm font-bold text-gray-800 leading-tight">
+                                        {item.name || 'Item'} <span className="text-gray-400 font-medium">({item.quantity})</span>
+                                    </h4>
+                                </div>
+                            ))}
+                            {items.length > 2 && <p className="text-[10px] font-bold text-gray-400">+{items.length - 2} more items</p>}
+                        </div>
+                    ) : (
+                        <h4 className="text-sm font-black text-gray-800 leading-tight">
+                            {post.food_type?.split(' - ')[0]} - {post.quantity}
+                        </h4>
+                    )}
                 </div>
-                <div className="pt-2 flex flex-col gap-1">
-                    <p className="text-xs font-black text-gray-700 uppercase tracking-tight">
-                        <span className="text-gray-400 font-bold normal-case">Pickup location </span>
-                        {post.location?.split(' | ')[0] || 'N/A'}
-                    </p>
-                    {post.expiry_time && !post.is_recurring && (
-                        <p className="text-[10px] font-bold text-amber-600 flex items-center gap-1">
-                            <Clock size={12} />
-                            Expires: {new Date(post.expiry_time).toLocaleString('en-US', {
+
+                <div className="space-y-1">
+                    {(() => {
+                        const target = post.destination_name || post.destination_type || post.destination;
+                        return target ? (
+                            <p className="text-[11px] font-bold text-gray-400 flex items-center gap-1.5 uppercase tracking-wider">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                For {target}
+                            </p>
+                        ) : null;
+                    })()}
+                    
+                    {post.expiry_time && (
+                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-1">
+                            expire: {new Date(post.expiry_time).toLocaleString('en-US', {
                                 month: 'short',
                                 day: 'numeric',
                                 hour: '2-digit',
                                 minute: '2-digit'
-                            })}
+                            }).replace(',', '')}
                         </p>
                     )}
                 </div>
             </div>
 
             {/* Status & Actions */}
-            <div className="flex flex-col items-center lg:items-end gap-4">
-                <div className="flex items-center gap-2">
-                    {post.is_urgent && (
-                        <span className="bg-[#EF5350] text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm animate-pulse">
-                            Urgent
-                        </span>
-                    )}
-                    {post.is_recurring && (
-                        <span className="bg-blue-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm">
-                            Recurring
-                        </span>
-                    )}
-                    {post.destination_type && (
-                        <span className="bg-purple-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1">
-                            🎯 {post.destination_name ? post.destination_name : `All ${post.destination_type}s`}
-                        </span>
-                    )}
+            <div className="flex items-center gap-4">
+                <div className="flex flex-col items-end gap-1.5">
                     {(() => {
-                        const displayStatus = (post.is_recurring && post.status === 'Available') ? 'Active' : post.status;
+                        const isExpired = post.expiry_time && new Date(post.expiry_time) < new Date();
+                        let displayStatus = post.status;
+                        if (isExpired && post.status === 'Available') displayStatus = 'Expired';
+
                         return (
-                            <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${
-                                displayStatus === 'Available'
-                                    ? 'bg-[#E8F5E9] text-[#2E7D32]'
-                                    : displayStatus === 'Active'
-                                        ? 'bg-blue-100 text-blue-700'
-                                        : displayStatus === 'Paused'
-                                            ? 'bg-amber-100 text-amber-700'
-                                            : displayStatus === 'Pending Pickup'
-                                                ? 'bg-[#98E158] text-white'
-                                                : 'bg-[#43A047] text-white'
+                            <span className={`w-[110px] py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm text-center ${
+                                displayStatus === 'Available' ? 'bg-[#E8F5E9] text-[#2E7D32]' :
+                                displayStatus === 'Active' ? 'bg-blue-100 text-blue-700' :
+                                displayStatus === 'Pending Pickup' ? 'bg-[#98E158] text-white' :
+                                displayStatus === 'Expired' ? 'bg-gray-100 text-gray-500' :
+                                'bg-[#43A047] text-white'
                             }`}>
                                 {displayStatus}
                             </span>
                         );
                     })()}
-                </div>
 
-                <div className="flex items-center gap-2">
+                    {(post.is_recurring || post.parent_recurring_id) && (
+                        <span className="w-[110px] bg-[#D1D5DB] text-gray-500 text-[10px] font-black py-1.5 rounded-full shadow-sm uppercase tracking-widest text-center">
+                            {post.parent_recurring_id ? 'Recurring Instance' : 'Recurring'}
+                        </span>
+                    )}
+
                     <button
-                        onClick={(e) => { e.stopPropagation(); onView(); }}
-                        className="bg-[#D1D5DB] text-gray-700 px-4 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest hover:bg-gray-300 transition-all active:scale-95"
+                        onClick={onView}
+                        className="w-[110px] py-1.5 bg-[#D1D5DB] hover:bg-gray-300 text-gray-700 text-[10px] font-black rounded-full transition-all uppercase tracking-widest shadow-sm"
                     >
                         View Details
                     </button>
+                </div>
+
+                {/* 3-Dot Menu */}
+                <div className="relative" ref={menuRef}>
                     <button
-                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                        className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                        onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+                        className="p-2 text-gray-400 hover:text-gray-900 rounded-full hover:bg-gray-100 transition-all"
                     >
-                        <Edit2 size={14} />
+                        <MoreVertical size={18} />
                     </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                    >
-                        <Trash2 size={14} />
-                    </button>
+
+                    {menuOpen && (
+                        <div className="absolute right-0 top-10 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in duration-150">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onEdit(); setMenuOpen(false); }}
+                                className="w-full text-left px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                            >
+                                <Edit2 size={16} /> Edit donation
+                            </button>
+                            <div className="h-px bg-gray-50 my-1"></div>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDelete(); setMenuOpen(false); }}
+                                className="w-full text-left px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            >
+                                <Trash2 size={16} /> Delete
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
