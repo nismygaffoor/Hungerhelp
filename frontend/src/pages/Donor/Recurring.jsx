@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
-import { Plus, Edit2, Pause, Play, Trash2, X, Camera, Loader2, ArrowRight } from 'lucide-react';
+import { Plus, Edit2, Pause, Play, Trash2, X, Camera, Loader2, ArrowRight, MoreVertical, Eye, Edit } from 'lucide-react';
 import api from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
 import EditDonationModal from './EditDonationModal';
@@ -13,11 +13,23 @@ const Recurring = () => {
     const [selectedItem, setSelectedItem] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(true);
+    const [openMenuId, setOpenMenuId] = useState(null);
     const backendUrl = 'http://localhost:5000/uploads/';
     const navigate = useNavigate();
+    const menuRef = useRef(null);
 
     useEffect(() => {
         fetchRecurring();
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setOpenMenuId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const fetchRecurring = async () => {
@@ -41,13 +53,12 @@ const Recurring = () => {
             'thursday': 4, 'friday': 5, 'saturday': 6, 'everyday': -1
         };
 
-        const today = new Date().getDay(); // 0-6
+        const today = new Date().getDay();
 
         return activeItems.reduce((next, current) => {
             const currentDayStr = current.day.toLowerCase();
             const nextDayStr = next.day.toLowerCase();
 
-            // Handle "Everyday" special case
             if (currentDayStr === 'everyday') return current;
             if (nextDayStr === 'everyday') return next;
 
@@ -78,6 +89,7 @@ const Recurring = () => {
         try {
             await api.delete(`/food/${id}`);
             fetchRecurring();
+            setOpenMenuId(null);
         } catch (err) {
             alert("Failed to delete");
         }
@@ -94,14 +106,14 @@ const Recurring = () => {
             <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-white min-h-screen`}>
                 <Navbar onMenuClick={() => setSidebarOpen(true)} />
                 <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto">
-                    <header className="mb-8">
+                    <header className="mb-8 px-2">
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">Manage Recurring Donations</h1>
                         <h2 className="text-lg font-bold text-gray-800 mt-6 mb-4">Recurring Donations</h2>
                     </header>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                         {/* Main Content: Recurring Items List */}
-                        <div className="lg:col-span-12 xl:col-span-7 bg-white rounded-3xl p-6 shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="lg:col-span-12 xl:col-span-7 bg-white rounded-3xl p-6 shadow-sm border border-gray-100 overflow-visible">
                             {loading ? (
                                 <div className="flex flex-col items-center justify-center p-20 gap-4">
                                     <Loader2 className="animate-spin text-green-600" size={32} />
@@ -116,57 +128,112 @@ const Recurring = () => {
                                     <p className="text-gray-400 font-medium max-w-xs mx-auto">Set up your first automated donation to create lasting impact.</p>
                                 </div>
                             ) : (
-                                <div className="space-y-6">
+                                <div className="space-y-1">
                                     {recurringItems.map((item) => (
-                                        <div key={item._id} className="flex flex-col sm:flex-row items-center justify-between gap-4 p-2 hover:bg-gray-50/50 rounded-2xl transition-all group">
-                                            <div className="flex items-center gap-4 w-full sm:w-auto">
-                                                <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-sm flex-shrink-0 bg-gray-100">
-                                                    <img
-                                                        src={item.images && item.images.length > 0
+                                        <div key={item._id} className="flex items-center justify-between p-3 hover:bg-gray-50/80 rounded-2xl transition-all group border-b border-gray-50 last:border-0">
+                                            {/* LEFT: Image & Details */}
+                                            <div className="flex items-center gap-5 flex-1">
+                                                <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-sm flex-shrink-0 bg-gray-100">
+                                                    {(() => {
+                                                        const firstItemImage = item.items?.[0]?.images?.[0];
+                                                        const imgSrc = (item.images && item.images.length > 0)
                                                             ? `${backendUrl}${item.images[0]}`
-                                                            : 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=100&h=100&fit=crop'}
-                                                        alt={item.food_type}
-                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                    />
+                                                            : (firstItemImage ? `${backendUrl}${firstItemImage}` : 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=100&h=100&fit=crop');
+                                                        
+                                                        return (
+                                                            <img
+                                                                src={imgSrc}
+                                                                alt={item.food_type}
+                                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                            />
+                                                        );
+                                                    })()}
                                                 </div>
-                                                <div className="text-left">
-                                                    <h3 className="text-base font-bold text-gray-800 leading-tight mb-1">{item.food_type}</h3>
-                                                    <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-tight">
-                                                        <p>On {item.day}</p>
-                                                        <p>{item.quantity} {item.frequency}</p>
-                                                        <p className="text-gray-400 font-medium">{item.destination}</p>
+                                                    <div className="text-[11px] font-bold text-gray-500 space-y-1">
+                                                        {(item.items && item.items.length > 0) ? (
+                                                            item.items.map((fi, idx) => (
+                                                                <p key={idx} className="flex items-center gap-1.5">
+                                                                    <span className="text-[9px] font-black text-green-600 uppercase tracking-tighter bg-green-50 px-1 rounded">
+                                                                        {fi.category}
+                                                                    </span>
+                                                                    <span className="text-gray-900">{fi.name || 'Item'}</span>
+                                                                    <span className="text-gray-400 font-medium">({fi.quantity})</span>
+                                                                </p>
+                                                            ))
+                                                        ) : (
+                                                            <>
+                                                                <p className="text-gray-900 font-black text-sm mb-1">{item.food_type?.split(' - ')[0] || 'Food Donation'}</p>
+                                                                <p>{item.quantity} {item.frequency}</p>
+                                                            </>
+                                                        )}
+                                                        <p className="pt-1 text-gray-400">Repeats: <span className="text-gray-600">{item.day}</span></p>
+                                                        {(() => {
+                                                            const target = item.destination_name || item.destination_type || item.destination;
+                                                            return target ? (
+                                                                <p className="text-gray-400 font-medium italic">{target}</p>
+                                                            ) : null;
+                                                        })()}
                                                     </div>
-                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2 w-full sm:w-auto">
-                                                <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full mr-2 ${item.status === 'Active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
-                                                    }`}>
-                                                    {item.status}
-                                                </span>
-                                                {item.destination_type && (
-                                                    <span className="bg-purple-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-sm mr-2">
-                                                        🎯 {item.destination_name ? item.destination_name : `All ${item.destination_type}s`}
-                                                    </span>
-                                                )}
-                                                <button
-                                                    onClick={() => handleToggleStatus(item)}
-                                                    className={`p-2 rounded-full transition-all ${item.status === 'Active' ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-green-50 text-green-600 hover:bg-green-100'
+
+                                            {/* RIGHT: Buttons & Menu */}
+                                            <div className="flex items-center gap-4">
+                                                {/* View & Pause Stack */}
+                                                <div className="flex flex-col gap-1.5">
+                                                    <button
+                                                        onClick={() => navigate(`/donor/donation/${item._id}`)}
+                                                        className="w-[110px] py-1.5 bg-[#76B56E] hover:bg-green-600 text-white text-[11px] font-black rounded-full transition-all uppercase tracking-widest shadow-sm"
+                                                    >
+                                                        View Details
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleToggleStatus(item)}
+                                                        className={`w-[110px] py-1.5 text-[11px] font-black rounded-full transition-all uppercase tracking-widest shadow-sm ${
+                                                            item.status === 'Active' 
+                                                            ? 'bg-[#E5E7EB] text-gray-500 hover:bg-gray-300' 
+                                                            : 'bg-[#E5E7EB] text-[#3F51B5] hover:bg-indigo-100'
                                                         }`}
-                                                >
-                                                    {item.status === 'Active' ? <Pause size={16} /> : <Play size={16} />}
-                                                </button>
-                                                <button
-                                                    onClick={() => handleEdit(item)}
-                                                    className="p-2 bg-blue-50 text-blue-400 hover:text-blue-600 rounded-full transition-all"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(item._id)}
-                                                    className="p-2 bg-red-50 text-red-400 hover:text-red-600 rounded-full transition-all"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
+                                                    >
+                                                        {item.status === 'Active' ? 'Pause' : 'Activate'}
+                                                    </button>
+                                                </div>
+
+                                                {/* 3-Dot Menu */}
+                                                <div className="relative">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setOpenMenuId(openMenuId === item._id ? null : item._id);
+                                                        }}
+                                                        className="p-2 text-gray-400 hover:text-gray-900 rounded-full hover:bg-gray-100 transition-all"
+                                                    >
+                                                        <MoreVertical size={20} />
+                                                    </button>
+
+                                                    {openMenuId === item._id && (
+                                                        <div 
+                                                            ref={menuRef}
+                                                            className="absolute right-0 top-10 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in duration-150"
+                                                        >
+                                                            <button
+                                                                onClick={() => {
+                                                                    handleEdit(item);
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                            >
+                                                                <Edit size={16} /> Edit donation
+                                                            </button>
+                                                            <div className="h-px bg-gray-50 my-1"></div>
+                                                            <button
+                                                                onClick={() => handleDelete(item._id)}
+                                                                className="w-full text-left px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                            >
+                                                                <Trash2 size={16} /> Delete
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -195,39 +262,59 @@ const Recurring = () => {
                                     <div className="space-y-10">
                                         <div className="flex gap-4">
                                             <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-sm flex-shrink-0 bg-gray-50">
-                                                <img
-                                                    src={nextDonation.images && nextDonation.images.length > 0
+                                                {(() => {
+                                                    const firstItemImage = nextDonation.items?.[0]?.images?.[0];
+                                                    const imgSrc = (nextDonation.images && nextDonation.images.length > 0)
                                                         ? `${backendUrl}${nextDonation.images[0]}`
-                                                        : "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=100&h=100&fit=crop"}
-                                                    alt="Food"
-                                                    className="w-full h-full object-cover"
-                                                />
+                                                        : (firstItemImage ? `${backendUrl}${firstItemImage}` : "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=100&h=100&fit=crop");
+                                                    
+                                                    return (
+                                                        <img
+                                                            src={imgSrc}
+                                                            alt="Food"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    );
+                                                })()}
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-gray-400/80 leading-relaxed line-clamp-1">
-                                                    Food Type: <span className="text-gray-700">{nextDonation.food_type}</span>
+                                                <p className="text-sm font-bold text-gray-900 leading-relaxed line-clamp-1 uppercase tracking-tight">
+                                                    {nextDonation.food_type?.split(' - ')[0]}
                                                 </p>
-                                                <p className="text-sm font-bold text-gray-400/80">{nextDonation.quantity} {nextDonation.frequency}</p>
-                                                <p className="text-sm font-bold text-gray-400/50">{nextDonation.destination}</p>
+                                                <p className="text-xs font-bold text-gray-400">{nextDonation.quantity} {nextDonation.frequency}</p>
+                                                {(() => {
+                                                    const target = nextDonation.destination_name || nextDonation.destination_type || nextDonation.destination;
+                                                    return target ? (
+                                                        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{target}</p>
+                                                    ) : null;
+                                                })()}
                                             </div>
                                         </div>
 
                                         <div className="space-y-4 pt-4 border-t border-gray-50">
                                             <div>
-                                                <p className="text-gray-900 font-bold text-base leading-tight">Pickup Day <span className="text-[#76B56E] font-extrabold ml-1">{nextDonation.day}</span></p>
-                                                <p className="text-gray-300 font-bold text-xs tracking-tight mt-2 uppercase">Recommended Slot: <span className="font-medium text-gray-400 px-1">9AM - 11AM</span></p>
+                                                <p className="text-gray-900 font-bold text-base leading-tight">Pickup Day <span className="text-[#76B56E] font-extrabold ml-1 uppercase">{nextDonation.day}</span></p>
+                                                <p className="text-gray-300 font-bold text-[10px] tracking-tight mt-2 uppercase">
+                                                    Pickup Time: <span className="font-medium text-gray-400 px-1">
+                                                        {nextDonation.location?.split(' | ')[1] || "Flexible"}
+                                                    </span>
+                                                </p>
                                             </div>
 
                                             <div className="flex gap-4 pt-4">
                                                 <button
-                                                    onClick={() => handleEdit(nextDonation)}
+                                                    onClick={() => navigate(`/donor/donation/${nextDonation._id}`)}
                                                     className="flex-1 py-3 bg-[#E5E7EB] hover:bg-gray-300 text-gray-500 text-sm font-bold rounded-2xl transition-all"
                                                 >
-                                                    Edit
+                                                    View Details
                                                 </button>
                                                 <button
                                                     onClick={() => handleToggleStatus(nextDonation)}
-                                                    className="flex-1 py-3 bg-[#76B56E] hover:bg-[#65a35e] text-white text-sm font-bold rounded-2xl transition-all shadow-sm"
+                                                    className={`flex-1 py-3 font-bold text-sm rounded-2xl transition-all shadow-sm ${
+                                                        nextDonation.status === 'Active'
+                                                        ? 'bg-[#76B56E] hover:bg-[#65a35e] text-white'
+                                                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                                    }`}
                                                 >
                                                     {nextDonation.status === 'Active' ? 'Pause' : 'Activate'}
                                                 </button>
@@ -244,7 +331,6 @@ const Recurring = () => {
                         </div>
                     </div>
                 </div>
-
 
                 <EditDonationModal
                     isOpen={isEditing}
