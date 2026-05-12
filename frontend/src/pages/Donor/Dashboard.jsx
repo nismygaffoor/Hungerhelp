@@ -111,10 +111,20 @@ const Dashboard = () => {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{timeAgo}</p>
-                                                    <p className={`text-xs font-black uppercase tracking-widest ${item.status === 'Available' ? 'text-green-500' :
-                                                        item.status === 'Active' ? 'text-blue-500' :
-                                                            item.status === 'Delivered' ? 'text-purple-500' : 'text-gray-500'
-                                                        }`}>{item.status}</p>
+                                                    {(() => {
+                                                        const isExpired = item.expiry_time && new Date(item.expiry_time) < new Date();
+                                                        let displayStatus = item.status;
+                                                        if (isExpired && item.status === 'Available') displayStatus = 'Expired';
+                                                        
+                                                        return (
+                                                            <p className={`text-xs font-black uppercase tracking-widest ${
+                                                                displayStatus === 'Available' ? 'text-green-500' :
+                                                                displayStatus === 'Active' ? 'text-blue-500' :
+                                                                displayStatus === 'Delivered' ? 'text-purple-500' : 
+                                                                displayStatus === 'Expired' ? 'text-gray-400' : 'text-gray-500'
+                                                            }`}>{displayStatus}</p>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </div>
                                         );
