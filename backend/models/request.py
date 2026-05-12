@@ -26,11 +26,19 @@ class FoodRequest:
 
     @staticmethod
     def get_all_active():
+        from models.user import User
         cursor = FoodRequest.collection.find({"status": "Active"}).sort("created_at", -1)
         requests = []
         for doc in cursor:
             doc['_id'] = str(doc['_id'])
             doc['beneficiary_id'] = str(doc['beneficiary_id'])
+            
+            # Enrich with beneficiary info
+            beneficiary = User.collection.find_one({"_id": ObjectId(doc['beneficiary_id'])})
+            if beneficiary:
+                doc['beneficiary_name'] = beneficiary.get('name', 'Beneficiary')
+                doc['beneficiary_type'] = beneficiary.get('beneficiaryType', 'Individual')
+            
             requests.append(doc)
         return requests
 
