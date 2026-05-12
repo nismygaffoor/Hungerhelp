@@ -112,7 +112,7 @@ class FoodPost:
             'food_type', 'quantity', 'location', 'expiry_time', 
             'description', 'is_recurring', 'is_urgent', 
             'frequency', 'day', 'destination', 'status', 'items',
-            'destination_type', 'destination_name'
+            'destination_type', 'destination_name', 'images'
         ]
         
         for field in allowed_fields:
