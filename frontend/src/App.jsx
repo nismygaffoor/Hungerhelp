@@ -39,6 +39,7 @@ import MyDonations from './pages/Donor/MyDonations';
 import DonationDetail from './pages/Donor/DonationDetail';
 import DonorProfile from './pages/Donor/Profile';
 import DonorRecurring from './pages/Donor/Recurring';
+import RequestedFood from './pages/Donor/RequestedFood';
 import DonorFeedback from './pages/Donor/Feedback';
 
 // Beneficiary Pages
@@ -48,6 +49,7 @@ import MyClaims from './pages/Benificiary/MyClaims';
 import BeneficiaryDonationDetail from './pages/Benificiary/BeneficiaryDonationDetail';
 import BeneficiaryProfile from './pages/Benificiary/Profile';
 import BeneficiaryRequest from './pages/Benificiary/Request';
+import MyRequests from './pages/Benificiary/MyRequests';
 import BeneficiaryFeedback from './pages/Benificiary/Feedback';
 
 // Volunteer Pages
@@ -101,6 +103,7 @@ function App() {
           <Route path="/donor/post" element={<ProtectedRoute allowedRoles={['Donor']}><PostFood /></ProtectedRoute>} />
           <Route path="/donor/recurring" element={<ProtectedRoute allowedRoles={['Donor']}><DonorRecurring /></ProtectedRoute>} />
           <Route path="/donor/history" element={<ProtectedRoute allowedRoles={['Donor']}><MyDonations /></ProtectedRoute>} />
+          <Route path="/donor/requestedfood" element={<ProtectedRoute allowedRoles={['Donor']}><RequestedFood /></ProtectedRoute>} />
           <Route path="/donor/donation/:id" element={<ProtectedRoute allowedRoles={['Donor']}><DonationDetail /></ProtectedRoute>} />
           <Route path="/donor/feedback" element={<ProtectedRoute allowedRoles={['Donor']}><DonorFeedback /></ProtectedRoute>} />
 
@@ -111,6 +114,7 @@ function App() {
           <Route path="/beneficiary/history" element={<ProtectedRoute allowedRoles={['Beneficiary']}><MyClaims /></ProtectedRoute>} />
           <Route path="/beneficiary/donation/:id" element={<ProtectedRoute allowedRoles={['Beneficiary']}><BeneficiaryDonationDetail /></ProtectedRoute>} />
           <Route path="/beneficiary/request" element={<ProtectedRoute allowedRoles={['Beneficiary']}><BeneficiaryRequest /></ProtectedRoute>} />
+          <Route path="/beneficiary/my-requests" element={<ProtectedRoute allowedRoles={['Beneficiary']}><MyRequests /></ProtectedRoute>} />
           <Route path="/beneficiary/feedback" element={<ProtectedRoute allowedRoles={['Beneficiary']}><BeneficiaryFeedback /></ProtectedRoute>} />
 
           {/* Volunteer Routes */}
