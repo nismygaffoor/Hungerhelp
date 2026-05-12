@@ -6,12 +6,13 @@ class DeliveryTask:
     collection = db.deliveries
 
     @staticmethod
-    def create_task(post_id, pickup_location, dropoff_location):
+    def create_task(post_id, pickup_location, dropoff_location, claim_id=None):
         """
         Creates a new delivery task when food is claimed.
         """
         task_doc = {
             "post_id": post_id,
+            "claim_id": claim_id,
             "volunteer_id": None, # Initially unassigned
             "pickup_location": pickup_location,
             "dropoff_location": dropoff_location,
