@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, Plus, ChevronDown } from 'lucide-react';
 import api from '../../api/axios';
 
 const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
@@ -22,8 +22,20 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
     useEffect(() => {
         if (item) {
             const [loc, times] = (item.location || '').split(' | ');
+            
+            // Handle legacy data where images might be at the top level instead of per-item
+            let initialItems = item.items;
+            if (!initialItems || initialItems.length === 0) {
+                initialItems = [{ 
+                    category: item.food_type?.split(' - ')[0] || '', 
+                    name: item.food_type?.split(' - ')[1] || '',
+                    quantity: item.quantity || '', 
+                    images: item.images || [] 
+                }];
+            }
+
             setFormData({
-                items: item.items || [{ category: item.food_type?.split(' - ')[0] || '', quantity: item.quantity || '', images: [] }],
+                items: initialItems,
                 location: loc || '',
                 pickup_times: times || '',
                 description: item.description || '',
@@ -48,15 +60,47 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
             const foodTypeString = formData.items.map(i => i.category).join(', ');
             const quantityString = formData.items.map(i => i.quantity).join(', ');
 
-            const submissionData = {
-                ...formData,
-                location: formData.pickup_times ? `${formData.location} | ${formData.pickup_times}` : formData.location,
-                food_type: formData.description ? `${foodTypeString} - ${formData.description}` : foodTypeString,
-                quantity: quantityString
-            };
-            delete submissionData.pickup_times;
+            const food_type = formData.description ? `${foodTypeString} - ${formData.description}` : foodTypeString;
+            const location = formData.pickup_times ? `${formData.location} | ${formData.pickup_times}` : formData.location;
 
-            await api.put(`/food/${item._id}`, submissionData);
+            const form = new FormData();
+            form.append('food_type', food_type);
+            form.append('quantity', quantityString);
+            form.append('location', location);
+            form.append('description', formData.description || '');
+            form.append('is_urgent', String(formData.is_urgent));
+            form.append('is_recurring', String(formData.is_recurring));
+            form.append('destination_type', formData.destination_type || '');
+            form.append('destination_name', formData.destination_name || '');
+
+            if (formData.is_recurring) {
+                form.append('frequency', formData.frequency);
+                form.append('day', formData.day);
+            } else {
+                form.append('expiry_time', formData.expiry_time);
+            }
+
+            // Prepare items (keeping existing image paths)
+            const cleanItems = formData.items.map(item => ({
+                category: item.category,
+                name: item.name || '',
+                quantity: item.quantity,
+                images: item.images || []
+            }));
+            form.append('items', JSON.stringify(cleanItems));
+
+            // Append new item images
+            formData.items.forEach((item, index) => {
+                if (item.newFiles) {
+                    item.newFiles.forEach(file => {
+                        form.append(`item_images_${index}`, file);
+                    });
+                }
+            });
+
+            await api.put(`/food/${item._id}`, form, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
             onUpdate();
             onClose();
         } catch (err) {
@@ -89,20 +133,55 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                                 <div key={index} className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50 space-y-4">
                                     <div className="flex gap-3">
                                         <div className="flex-1">
+                                            <div className="relative">
+                                                <select
+                                                    required
+                                                    className="w-full bg-white border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 outline-none appearance-none cursor-pointer"
+                                                    value={foodItem.category}
+                                                    onChange={(e) => {
+                                                        const newItems = [...formData.items];
+                                                        newItems[index].category = e.target.value;
+                                                        setFormData({ ...formData, items: newItems });
+                                                    }}
+                                                >
+                                                    <option value="" disabled>Select Type</option>
+                                                    {/* Fallback for legacy categories like "JK" */}
+                                                    {foodItem.category && ![
+                                                        "Vegetables", "Fruits", "Cooked Meals", "Baked Goods", 
+                                                        "Grains & Rice", "Dairy", "Meat & Poultry", "Canned Food", 
+                                                        "Beverages", "Other"
+                                                    ].includes(foodItem.category) && (
+                                                        <option value={foodItem.category}>{foodItem.category}</option>
+                                                    )}
+                                                    <option value="Vegetables">Vegetables</option>
+                                                    <option value="Fruits">Fruits</option>
+                                                    <option value="Cooked Meals">Cooked Meals</option>
+                                                    <option value="Baked Goods">Baked Goods</option>
+                                                    <option value="Grains & Rice">Grains & Rice</option>
+                                                    <option value="Dairy">Dairy</option>
+                                                    <option value="Meat & Poultry">Meat & Poultry</option>
+                                                    <option value="Canned Food">Canned Food</option>
+                                                    <option value="Beverages">Beverages</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                                            </div>
+                                        </div>
+                                        <div className="flex-1">
                                             <input
                                                 required
                                                 type="text"
-                                                placeholder="Item type"
+                                                placeholder="Item Name (e.g. Basmati Rice)"
                                                 className="w-full bg-white border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 outline-none"
-                                                value={foodItem.category}
+                                                value={foodItem.name || ''}
                                                 onChange={(e) => {
                                                     const newItems = [...formData.items];
-                                                    newItems[index].category = e.target.value;
+                                                    newItems[index].name = e.target.value;
                                                     setFormData({ ...formData, items: newItems });
                                                 }}
                                             />
                                         </div>
-                                        <div className="w-1/3">
+                                        <div className="w-1/4">
                                             <input
                                                 required
                                                 type="text"
@@ -134,23 +213,74 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
                                     {foodItem.images?.length > 0 && (
                                         <div className="flex gap-2 overflow-x-auto pb-1">
                                             {foodItem.images.map((img, imgIdx) => (
-                                                <div key={imgIdx} className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-gray-100">
+                                                <div key={imgIdx} className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-gray-100 relative group">
                                                     <img
                                                         src={img.startsWith('http') ? img : `http://localhost:5000/uploads/${img}`}
                                                         className="w-full h-full object-cover"
                                                         alt="Item"
                                                     />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newItems = [...formData.items];
+                                                            newItems[index].images = newItems[index].images.filter((_, i) => i !== imgIdx);
+                                                            setFormData({ ...formData, items: newItems });
+                                                        }}
+                                                        className="absolute top-0 right-0 bg-red-500 text-white p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        title="Remove Image"
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
                                                 </div>
                                             ))}
                                         </div>
                                     )}
+                                    {/* New Image Upload */}
+                                    <div className="mt-3">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
+                                            {(foodItem.images?.length > 0 || foodItem.newFiles?.length > 0) ? 'Current Image' : 'Add Photo'}
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(foodItem.newFiles || []).map((file, fIdx) => (
+                                                <div key={fIdx} className="w-12 h-12 rounded-lg bg-green-50 border border-green-100 flex items-center justify-center relative overflow-hidden">
+                                                    <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt="Preview" />
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newItems = [...formData.items];
+                                                            newItems[index].newFiles = newItems[index].newFiles.filter((_, i) => i !== fIdx);
+                                                            setFormData({ ...formData, items: newItems });
+                                                        }}
+                                                        className="absolute top-0 right-0 bg-red-500 text-white p-0.5"
+                                                    >
+                                                        <X size={10} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <label className={`w-12 h-12 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-green-400 transition-all ${(foodItem.newFiles?.length > 0 || foodItem.images?.length > 0) ? 'hidden' : ''}`}>
+                                                <Plus size={16} className="text-gray-400" />
+                                                <input 
+                                                    type="file" 
+                                                    className="hidden" 
+                                                    onChange={(e) => {
+                                                        const files = Array.from(e.target.files);
+                                                        if (files.length > 0) {
+                                                            const newItems = [...formData.items];
+                                                            newItems[index].newFiles = [files[0]];
+                                                            setFormData({ ...formData, items: newItems });
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                             <button
                                 type="button"
                                 onClick={() => setFormData({
                                     ...formData,
-                                    items: [...formData.items, { category: '', quantity: '', images: [] }]
+                                    items: [...formData.items, { category: '', name: '', quantity: '', images: [], newFiles: [] }]
                                 })}
                                 className="text-sm font-bold text-green-600 hover:text-green-700 ml-1"
                             >
@@ -160,41 +290,40 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
 
                         <div className="grid grid-cols-2 gap-4">
 
+                            <div className="col-span-2 grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Location</label>
+                                    <input
+                                        required
+                                        type="text"
+                                        className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
+                                        value={formData.location}
+                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Pickup Times</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g., 9AM - 5PM"
+                                        className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
+                                        value={formData.pickup_times}
+                                        onChange={(e) => setFormData({ ...formData, pickup_times: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
                             {!formData.is_recurring && (
-                                <>
-                                    <div className="col-span-2 grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Location</label>
-                                            <input
-                                                required
-                                                type="text"
-                                                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
-                                                value={formData.location}
-                                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Pickup Times</label>
-                                            <input
-                                                type="text"
-                                                placeholder="e.g., 9AM - 5PM"
-                                                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
-                                                value={formData.pickup_times}
-                                                onChange={(e) => setFormData({ ...formData, pickup_times: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Expiry Time</label>
-                                        <input
-                                            required
-                                            type="datetime-local"
-                                            className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
-                                            value={formData.expiry_time}
-                                            onChange={(e) => setFormData({ ...formData, expiry_time: e.target.value })}
-                                        />
-                                    </div>
-                                </>
+                                <div className="col-span-2">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Expiry Time</label>
+                                    <input
+                                        required
+                                        type="datetime-local"
+                                        className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
+                                        value={formData.expiry_time}
+                                        onChange={(e) => setFormData({ ...formData, expiry_time: e.target.value })}
+                                    />
+                                </div>
                             )}
 
                             <div className="col-span-2">
