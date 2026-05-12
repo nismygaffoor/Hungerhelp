@@ -142,22 +142,149 @@ def get_posts():
 
     return jsonify(filtered_posts), 200
 
+@food_bp.route('/fulfill-request', methods=['POST'])
+@token_required
+def fulfill_request():
+    """
+    Donor fulfills a specific beneficiary request.
+    Creates a food post already marked as 'Claimed',
+    marks request as 'Fulfilled', and creates Claim + DeliveryTask.
+    """
+    current_user = request.user_data
+    if current_user['role'] != 'Donor':
+        return jsonify({"error": "Only donors can fulfill requests"}), 403
+
+    try:
+        # Use existing logic to get items and data
+        data = request.form.to_dict()
+        request_id = data.get('request_id')
+        beneficiary_id = data.get('beneficiary_id') # Should be passed from frontend
+        
+        if not request_id or not beneficiary_id:
+            return jsonify({"error": "Missing request_id or beneficiary_id"}), 400
+
+        # 1. Handle Images
+        all_images = []
+        for key in request.files:
+            if key.startswith('item_images_'):
+                file = request.files[key]
+                if file and file.filename:
+                    filename = f"{uuid.uuid4()}_{file.filename}"
+                    file_path = os.path.join('food_posts', filename)
+                    full_path = os.path.join('uploads', file_path)
+                    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                    file.save(full_path)
+                    all_images.append(file_path)
+
+        # 2. Create Food Post (Status: Claimed)
+        from models.food_post import FoodPost
+        data['donor_id'] = current_user['user_id']
+        data['images'] = all_images
+        data['status'] = 'Claimed'
+        data['claimed_by'] = ObjectId(beneficiary_id)
+        data['claimed_at'] = datetime.utcnow()
+        
+        # Convert items if present
+        if 'items' in data:
+            import json
+            data['items'] = json.loads(data['items'])
+
+        post_id = FoodPost.create(data)
+
+        # 3. Update Request Status
+        from models.request import FoodRequest
+        FoodRequest.collection.update_one(
+            {"_id": ObjectId(request_id)},
+            {"$set": {"status": "Fulfilled"}}
+        )
+
+        # 4. Create Claim Document
+        from models.claim import Claim
+        claim_id = Claim.collection.insert_one({
+            "beneficiary_id": ObjectId(beneficiary_id),
+            "post_id": ObjectId(post_id),
+            "donor_id": ObjectId(current_user['user_id']),
+            "status": "Claimed",
+            "claimed_at": datetime.utcnow()
+        }).inserted_id
+
+        # 5. Create Delivery Task
+        from models.delivery import DeliveryTask
+        # We need the beneficiary's address for dropoff
+        from models.user import User
+        beneficiary = User.collection.find_one({"_id": ObjectId(beneficiary_id)})
+        dropoff_location = beneficiary.get('address', "Beneficiary Address")
+
+        DeliveryTask.create_task(
+            post_id=post_id,
+            pickup_location=data['location'],
+            dropoff_location=dropoff_location,
+            claim_id=str(claim_id)
+        )
+
+        return jsonify({
+            "message": "Request fulfilled successfully. Delivery task created.",
+            "post_id": post_id,
+            "claim_id": str(claim_id)
+        }), 201
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to fulfill request: {str(e)}"}), 500
+
 @food_bp.route('/my-posts', methods=['GET'])
 @token_required
 def get_my_posts():
-    """
-    Get all posts (recurring and non-recurring) created by the logged-in donor.
-    """
     current_user = request.user_data
-    posts = FoodPost.get_by_donor(current_user['user_id'])
+    
+    # --- AUTOMATION: Process recurring donations for today ---
+    try:
+        today_day = datetime.now().strftime('%A')
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        # Find active templates for today
+        templates = list(FoodPost.collection.find({
+            "donor_id": current_user['user_id'],
+            "is_recurring": True,
+            "status": "Active",
+            "day": today_day
+        }))
+        
+        for template in templates:
+            # Check if already created today
+            if not FoodPost.collection.find_one({
+                "parent_recurring_id": template['_id'],
+                "created_at": {"$gte": today_start}
+            }):
+                # Create instance
+                instance = {
+                    "donor_id": template['donor_id'],
+                    "food_type": template['food_type'],
+                    "quantity": template['quantity'],
+                    "location": template['location'],
+                    "description": f"(Scheduled) {template.get('description', '')}",
+                    "images": template.get('images', []),
+                    "items": template.get('items', []),
+                    "status": "Available",
+                    "is_recurring": False,
+                    "is_urgent": template.get('is_urgent', False),
+                    "parent_recurring_id": template['_id'],
+                    "destination_type": template.get('destination_type', ""),
+                    "destination_name": template.get('destination_name', ""),
+                    "expiry_time": (datetime.utcnow().replace(hour=23, minute=59)).isoformat(),
+                    "created_at": datetime.utcnow()
+                }
+                FoodPost.collection.insert_one(instance)
+    except Exception as e:
+        print(f"Recurring Automation Error: {str(e)}")
+    # --- END AUTOMATION ---
+
+    posts = FoodPost.get_by_donor(current_user['user_id'], is_recurring=False)
     return jsonify(posts), 200
 
 @food_bp.route('/my-recurring', methods=['GET'])
 @token_required
 def get_my_recurring():
-    """
-    Get recurring posts created by the logged-in donor.
-    """
+    """Get recurring posts created by the logged-in donor."""
     current_user = request.user_data
     posts = FoodPost.get_by_donor(current_user['user_id'], is_recurring=True)
     return jsonify(posts), 200
@@ -301,6 +428,12 @@ def get_post_detail(post_id):
         post['_id'] = str(post['_id'])
         post['donor_id'] = str(post['donor_id'])
         
+        # Convert any other ObjectIds to strings for JSON serialization
+        if 'parent_recurring_id' in post:
+            post['parent_recurring_id'] = str(post['parent_recurring_id'])
+        if 'claimed_by' in post:
+            post['claimed_by'] = str(post['claimed_by'])
+        
         return jsonify(post), 200
     except Exception as e:
         return jsonify({"message": "Invalid post ID"}), 400
@@ -339,33 +472,86 @@ def update_post_status(post_id):
 def update_post(post_id):
     """Update post details (verification inside FoodPost.update)."""
     current_user = request.user_data
-    data = request.json
+    
+    # Handle both JSON and Multipart data
+    if request.is_json:
+        data = request.json
+    else:
+        data = request.form.to_dict()
     
     if not data:
         return jsonify({"message": "Missing update data"}), 400
         
-    # Handle boolean conversion for is_recurring
+    # Handle boolean conversion
     if isinstance(data.get('is_recurring'), str):
         data['is_recurring'] = data['is_recurring'].lower() == 'true'
     
     if isinstance(data.get('is_urgent'), str):
         data['is_urgent'] = data['is_urgent'].lower() == 'true'
 
-    # If converting to recurring, automatically set status to Active
+    # Status logic
     if data.get('is_recurring') is True and 'status' not in data:
         data['status'] = 'Active'
-    # If converting back to non-recurring, set status back to Available
     elif data.get('is_recurring') is False and 'status' not in data:
         data['status'] = 'Available'
     
-    # Parse items if present (sent as JSON string from frontend)
+    # Parse items if present
     import json
     if 'items' in data and isinstance(data['items'], str):
         try:
             data['items'] = json.loads(data['items'])
         except:
             data['items'] = []
-        
+    
+    # Handle New Image Uploads
+    new_images = []
+    import uuid
+    
+    # Check for general images
+    if 'images' in request.files:
+        files = request.files.getlist('images')
+        for file in files:
+            if file and file.filename:
+                filename = f"{uuid.uuid4()}_{file.filename}"
+                file_path = os.path.join('food_posts', filename)
+                full_path = os.path.join('uploads', file_path)
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                file.save(full_path)
+                new_images.append(file_path)
+
+    # Check for item-specific images
+    items = data.get('items', [])
+    for i, item in enumerate(items):
+        file_key = f'item_images_{i}'
+        if file_key in request.files:
+            item_files = request.files.getlist(file_key)
+            item_images = item.get('images', [])
+            for file in item_files:
+                if file and file.filename:
+                    filename = f"{uuid.uuid4()}_{file.filename}"
+                    file_path = os.path.join('food_posts', filename)
+                    full_path = os.path.join('uploads', file_path)
+                    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                    file.save(full_path)
+                    item_images.append(file_path)
+                    new_images.append(file_path)
+            item['images'] = item_images
+
+    # Rebuild top-level images array from all items to handle deletions/additions correctly
+    all_current_images = []
+    for item in items:
+        if 'images' in item:
+            all_current_images.extend(item['images'])
+    
+    # Also include any general images uploaded (if any)
+    if new_images:
+        # Avoid duplicates if they were already added to items
+        for img in new_images:
+            if img not in all_current_images:
+                all_current_images.append(img)
+                
+    data['images'] = all_current_images
+
     success, message = FoodPost.update(post_id, current_user['user_id'], data)
     
     if success:
@@ -399,7 +585,7 @@ def claim_food_consolidated(post_id):
         FoodPost.collection.update_one(
             {"_id": ObjectId(post_id)},
             {"$set": {
-                "status": "Pending Pickup",
+                "status": "Claimed",
                 "claimed_by": ObjectId(current_user['user_id']),
                 "claimed_at": datetime.utcnow()
             }}
@@ -411,7 +597,7 @@ def claim_food_consolidated(post_id):
             "beneficiary_id": ObjectId(current_user['user_id']),
             "post_id": ObjectId(post_id),
             "donor_id": post['donor_id'],
-            "status": "Pending Pickup",
+            "status": "Claimed",
             "claimed_at": datetime.utcnow()
         }).inserted_id
 
