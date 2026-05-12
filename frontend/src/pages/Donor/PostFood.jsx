@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -8,14 +9,17 @@ import {
     Utensils,
     Scale,
     FileText,
-    Trash2
+    Loader2,
+    Trash2,
+    ChevronDown
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
 
 const PostFood = () => {
     const { user } = useAuth();
-    const [items, setItems] = useState([{ category: '', quantity: '', images: [], previews: [] }]);
+    const locationState = useLocation();
+    const [items, setItems] = useState([{ category: '', name: '', quantity: '', images: [], previews: [] }]);
     const [description, setDescription] = useState('');
     const [location, setLocation] = useState(user?.address || '');
     const [pickupTimes, setPickupTimes] = useState('');
@@ -39,6 +43,35 @@ const PostFood = () => {
         return date.toISOString().slice(0, 16);
     });
 
+    const [matchRequestId, setMatchRequestId] = useState(null);
+    const [matchBeneficiaryId, setMatchBeneficiaryId] = useState(null);
+
+    useEffect(() => {
+        if (locationState.state?.matchRequest) {
+            const { requestId, beneficiaryId, items: matchedItems, beneficiaryName, beneficiaryType } = locationState.state.matchRequest;
+            
+            setMatchRequestId(requestId);
+            setMatchBeneficiaryId(beneficiaryId);
+
+            // Map items to include empty image/preview arrays
+            const formattedItems = matchedItems.map(item => ({
+                category: item.category,
+                name: item.name || '',
+                quantity: item.quantity,
+                images: [],
+                previews: []
+            }));
+
+            setItems(formattedItems);
+            setDestinationName(beneficiaryName);
+            setDestinationType(beneficiaryType);
+            setIsUrgent(locationState.state.matchRequest.urgency === 'High');
+            
+            // Clean up the state so it doesn't re-fill if the user navigates away and back
+            window.history.replaceState({}, document.title);
+        }
+    }, [locationState.state]);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (suggestionRef.current && !suggestionRef.current.contains(event.target)) {
@@ -49,7 +82,7 @@ const PostFood = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleBeneficiarySearch = async (query) => {
+    const handleBeneficiarySearch = (query) => {
         setDestinationName(query);
         if (query.length < 2) {
             setSuggestions([]);
@@ -58,22 +91,19 @@ const PostFood = () => {
         }
 
         setBeneficiarySearchLoading(true);
-        try {
-            const res = await api.get(`/users/search-beneficiaries?q=${query}`);
-            setSuggestions(res.data);
-            setShowSuggestions(true);
-        } catch (err) {
-            console.error("Search failed", err);
-        } finally {
-            setBeneficiarySearchLoading(false);
-        }
+        api.get(`/users/search-beneficiaries?q=${query}`)
+            .then(res => {
+                setSuggestions(res.data);
+                setShowSuggestions(true);
+            })
+            .catch(err => console.error("Search failed", err))
+            .finally(() => setBeneficiarySearchLoading(false));
     };
 
     const handleBeneficiarySelect = (beneficiary) => {
         setDestinationName(beneficiary.name);
         setIsValidBeneficiary(true);
         setShowSuggestions(false);
-        // Optionally auto-set the type if it matches
         if (beneficiary.beneficiaryType) {
             setDestinationType(beneficiary.beneficiaryType);
         }
@@ -99,7 +129,7 @@ const PostFood = () => {
     };
 
     const addItem = () => {
-        setItems([...items, { category: '', quantity: '', images: [], previews: [] }]);
+        setItems([...items, { category: '', name: '', quantity: '', images: [], previews: [] }]);
     };
 
     const removeItem = (index) => {
@@ -113,8 +143,8 @@ const PostFood = () => {
         const files = Array.from(e.target.files);
         const currentItem = items[index];
 
-        if (currentItem.images.length + files.length > 4) {
-            alert("Maximum 4 images per item allowed.");
+        if (currentItem.images.length + files.length > 1) {
+            alert("Maximum 1 image per item allowed.");
             return;
         }
 
@@ -150,10 +180,8 @@ const PostFood = () => {
 
         setLoading(true);
         try {
-            // Aggregate items into strings for backward compatibility
             const foodTypeString = items.map(i => i.category).join(', ');
             const quantityString = items.map(i => i.quantity).join(', ');
-            // Description might be generic, so we append it once
             const finalFoodType = description ? `${foodTypeString} - ${description}` : foodTypeString;
 
             const formData = new FormData();
@@ -167,49 +195,47 @@ const PostFood = () => {
             formData.append('destination_type', destinationType);
             formData.append('destination_name', destinationName.trim());
 
-            // Send aggregated items as JSON string for potential future use
+            if (matchRequestId) {
+                formData.append('request_id', matchRequestId);
+                formData.append('beneficiary_id', matchBeneficiaryId);
+            }
+
             const itemsForJson = items.map(item => ({
                 category: item.category,
+                name: item.name || '',
                 quantity: item.quantity
             }));
             formData.append('items', JSON.stringify(itemsForJson));
-
-            // If a specific name is provided but invalid, we might want to alert, 
-            // but for now we'll allow it or let the user decide. 
-            // The user requested "if user type non user tell him" which I've added to the UI.
 
             if (isRecurring) {
                 formData.append('frequency', frequency);
                 formData.append('day', recurringDay);
             }
 
-            // Send per-item images
             items.forEach((item, index) => {
                 item.images.forEach((image) => {
                     formData.append(`item_images_${index}`, image);
                 });
             });
 
-            await api.post('/food/', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+            const endpoint = matchRequestId ? '/food/fulfill-request' : '/food/';
+            await api.post(endpoint, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            alert('Food posted successfully!');
-            setItems([{ category: '', quantity: '', images: [], previews: [] }]); // Reset to default
+            alert(matchRequestId ? 'Request fulfilled successfully!' : 'Food posted successfully!');
+            
+            // Reset
+            setItems([{ category: '', name: '', quantity: '', images: [], previews: [] }]);
             setDescription('');
             setPickupTimes('');
             setIsUrgent(false);
+            setMatchRequestId(null);
+            setMatchBeneficiaryId(null);
             setDestinationType('');
             setDestinationName('');
-            setExpiryDate(() => {
-                const date = new Date();
-                date.setHours(date.getHours() + 24);
-                return date.toISOString().slice(0, 16);
-            });
         } catch (err) {
-            alert('Failed to post food.');
+            alert('Failed to process post.');
         } finally {
             setLoading(false);
         }
@@ -238,12 +264,35 @@ const PostFood = () => {
                                             {/* Category Input */}
                                             <div className="w-full md:flex-[2] relative">
                                                 <Utensils className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                                                <input
-                                                    type="text"
-                                                    placeholder="Food Type (e.g. Rice)"
-                                                    className="w-full border border-gray-100 bg-white rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all text-sm"
+                                                <select
+                                                    className="w-full border border-gray-100 bg-white rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all text-sm appearance-none cursor-pointer"
                                                     value={item.category}
                                                     onChange={e => handleItemChange(index, 'category', e.target.value)}
+                                                >
+                                                    <option value="" disabled>Select Type</option>
+                                                    <option value="Vegetables">Vegetables</option>
+                                                    <option value="Fruits">Fruits</option>
+                                                    <option value="Cooked Meals">Cooked Meals</option>
+                                                    <option value="Baked Goods">Baked Goods</option>
+                                                    <option value="Grains & Rice">Grains & Rice</option>
+                                                    <option value="Dairy">Dairy</option>
+                                                    <option value="Meat & Poultry">Meat & Poultry</option>
+                                                    <option value="Canned Food">Canned Food</option>
+                                                    <option value="Beverages">Beverages</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                                            </div>
+
+                                            {/* Name Input */}
+                                            <div className="w-full md:flex-[2] relative">
+                                                <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Item Name (e.g. Basmati Rice)"
+                                                    className="w-full border border-gray-100 bg-white rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all text-sm"
+                                                    value={item.name || ''}
+                                                    onChange={e => handleItemChange(index, 'name', e.target.value)}
                                                 />
                                             </div>
 
@@ -275,7 +324,7 @@ const PostFood = () => {
                                                     ))}
                                                 </div>
 
-                                                {item.previews.length < 4 && (
+                                                {item.previews.length < 1 && (
                                                     <label className="w-10 h-10 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center hover:bg-white hover:border-green-500/50 transition-all cursor-pointer bg-white shrink-0 group/cam">
                                                         <Camera className="text-gray-400 group-hover/cam:text-green-600" size={16} />
                                                         <input
