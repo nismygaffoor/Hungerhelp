@@ -103,6 +103,20 @@ const BeneficiaryDonationDetail = () => {
     const images = (donation.images && donation.images.length > 0) ? donation.images : allItemImages;
     const hasImages = images.length > 0;
 
+    // Check if the donation has expired
+    const isExpired = donation.expiry_time && new Date(donation.expiry_time) < new Date();
+    
+    // Status color mapping
+    const getStatusStyles = () => {
+        if (isExpired && donation.status === 'Available') return 'bg-gray-100 text-gray-500';
+        if (donation.status === 'Available') return 'bg-green-100 text-green-700';
+        if (donation.status === 'Pending Pickup') return 'bg-[#98E158] text-white';
+        if (donation.status === 'Delivered') return 'bg-green-600 text-white';
+        return 'bg-gray-100 text-gray-700';
+    };
+
+    const displayStatus = (isExpired && donation.status === 'Available') ? 'Expired' : donation.status;
+
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
             <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
@@ -110,23 +124,23 @@ const BeneficiaryDonationDetail = () => {
             <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-white min-h-screen`}>
                 <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-                <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto">
+                <div className="p-4 md:p-6 max-w-7xl mx-auto">
                     {/* Back Button */}
                     <button
                         onClick={() => navigate(backPath)}
-                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold text-sm mb-6 transition-all group"
+                        className="flex items-center gap-2 text-gray-500 hover:text-green-600 font-bold text-xs mb-8 transition-all group"
                     >
-                        <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-                        {backLabel}
+                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                        {backLabel.toUpperCase()}
                     </button>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                         {/* Left Column - Images & Main Info */}
-                        <div className="lg:col-span-2 space-y-6">
+                        <div className="lg:col-span-8 space-y-8">
                             {/* Image Gallery */}
                             {hasImages && (
-                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-50">
-                                    <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden mb-4">
+                                <div className="bg-white rounded-[2rem] p-4 shadow-sm border border-gray-100">
+                                    <div className="aspect-[21/9] bg-gray-50 rounded-[1.5rem] overflow-hidden mb-4 border border-gray-50">
                                         <img
                                             src={images[currentImageIndex].startsWith('http')
                                                 ? images[currentImageIndex]
@@ -136,12 +150,12 @@ const BeneficiaryDonationDetail = () => {
                                         />
                                     </div>
                                     {images.length > 1 && (
-                                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-200">
+                                        <div className="flex gap-3 overflow-x-auto pb-2 px-1 scrollbar-thin scrollbar-thumb-gray-200">
                                             {images.map((img, i) => (
                                                 <button
                                                     key={i}
                                                     onClick={() => setCurrentImageIndex(i)}
-                                                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${i === currentImageIndex ? 'border-green-500' : 'border-transparent'
+                                                    className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${i === currentImageIndex ? 'border-green-500 scale-95' : 'border-transparent opacity-60 hover:opacity-100'
                                                         }`}
                                                 >
                                                     <img
@@ -157,94 +171,98 @@ const BeneficiaryDonationDetail = () => {
                             )}
 
                             {/* Main Details Card */}
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-50">
-                                <div className="flex items-start justify-between mb-6">
+                            <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
                                     <div className="flex-1">
-                                        <h1 className="text-2xl font-black text-gray-900 mb-2">{foodName}</h1>
-                                        <div className="flex items-center gap-2 text-gray-500 text-sm font-bold uppercase tracking-widest mt-1">
-                                            <span>Donated by {donation.donor_name || "Unknown Donor"}</span>
+                                        <div className="flex items-center gap-3 mb-3">
+                                            {donation.is_urgent && (
+                                                <span className="px-3 py-1 bg-red-50 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-full flex items-center gap-1 border border-red-100">
+                                                    <AlertCircle size={12} />
+                                                    Urgent
+                                                </span>
+                                            )}
+                                            {donation.is_recurring && (
+                                                <span className="px-3 py-1 bg-blue-50 text-blue-500 text-[10px] font-black uppercase tracking-widest rounded-full flex items-center gap-1 border border-blue-100">
+                                                    <Repeat size={12} />
+                                                    Recurring
+                                                </span>
+                                            )}
                                         </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        {donation.is_urgent && (
-                                            <span className="px-3 py-1 bg-red-100 text-red-600 text-xs font-black uppercase tracking-wider rounded-full flex items-center gap-1">
-                                                <AlertCircle size={14} />
-                                                Urgent
-                                            </span>
-                                        )}
-                                        {donation.is_recurring && (
-                                            <span className="px-3 py-1 bg-blue-100 text-blue-600 text-xs font-black uppercase tracking-wider rounded-full flex items-center gap-1">
-                                                <Repeat size={14} />
-                                                Recurring
-                                            </span>
+                                        <h1 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">{foodName}</h1>
+                                        <p className="text-green-600 text-xs font-black uppercase tracking-widest mb-6">
+                                            Donated by {donation.donor_name || "Community Partner"}
+                                        </p>
+                                        {foodDesc && (
+                                            <p className="text-gray-500 text-base font-medium leading-relaxed max-w-2xl italic border-l-4 border-green-50 pl-6 py-2">
+                                                "{foodDesc}"
+                                            </p>
                                         )}
                                     </div>
                                 </div>
 
-                                {foodDesc && (
-                                    <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100 italic text-gray-600 text-sm">
-                                        "{foodDesc}"
-                                    </div>
-                                )}
-
                                 {/* Items Breakdown */}
-                                <div className="border-t border-b border-gray-100 py-6 mb-6">
-                                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Donated Items</h3>
+                                <div className="bg-gray-50/50 rounded-3xl p-6 mb-8 border border-gray-100">
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-5">Package Contents</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {(donation.items || [{ category: foodName, quantity: donation.quantity }]).map((item, idx) => (
-                                            <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                                <div className="p-2 bg-white rounded-lg shadow-sm">
+                                            <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-50 shadow-sm">
+                                                <div className="p-2 bg-green-50 rounded-xl">
                                                     <Package size={18} className="text-green-600" />
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm font-bold text-gray-900">{item.category}</p>
-                                                    <p className="text-xs font-medium text-gray-500">{item.quantity}</p>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[8px] font-black text-green-600 uppercase tracking-tighter bg-green-50 px-1.5 py-0.5 rounded">
+                                                            {item.category}
+                                                        </span>
+                                                        <p className="text-sm font-bold text-gray-900">{item.name || 'Item'}</p>
+                                                        <p className="text-[11px] font-bold text-gray-400">({item.quantity})</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 px-2">
                                     {location && (
-                                        <div className="flex items-start gap-3">
-                                            <div className="p-2 bg-blue-100 rounded-lg">
-                                                <MapPin size={20} className="text-blue-600" />
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-2.5 bg-blue-50 rounded-xl border border-blue-100">
+                                                <MapPin size={20} className="text-blue-500" />
                                             </div>
                                             <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Location</p>
-                                                <p className="text-sm font-bold text-gray-900 mt-1">{location}</p>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pickup Location</p>
+                                                <p className="text-sm font-bold text-gray-800">{location}</p>
                                             </div>
                                         </div>
                                     )}
 
                                     {pickupTimes && (
-                                        <div className="flex items-start gap-3">
-                                            <div className="p-2 bg-purple-100 rounded-lg">
-                                                <Clock size={20} className="text-purple-600" />
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-2.5 bg-purple-50 rounded-xl border border-purple-100">
+                                                <Clock size={20} className="text-purple-500" />
                                             </div>
                                             <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pickup Times</p>
-                                                <p className="text-sm font-bold text-gray-900 mt-1">{pickupTimes}</p>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Available Hours</p>
+                                                <p className="text-sm font-bold text-gray-800">{pickupTimes}</p>
                                             </div>
                                         </div>
                                     )}
 
                                     {donation.expiry_time && (
-                                        <div className="flex items-start gap-3">
-                                            <div className="p-2 bg-orange-100 rounded-lg">
-                                                <Calendar size={20} className="text-orange-600" />
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-2.5 bg-orange-50 rounded-xl border border-orange-100">
+                                                <Calendar size={20} className="text-orange-500" />
                                             </div>
                                             <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Expiry Time</p>
-                                                <p className="text-sm font-bold text-gray-900 mt-1">
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Best Before</p>
+                                                <p className={`text-sm font-bold ${isExpired ? 'text-red-500' : 'text-gray-800'}`}>
                                                     {new Date(donation.expiry_time).toLocaleString('en-US', {
-                                                        year: 'numeric',
                                                         month: 'long',
                                                         day: 'numeric',
                                                         hour: '2-digit',
                                                         minute: '2-digit'
                                                     })}
+                                                    {isExpired && " (EXPIRED)"}
                                                 </p>
                                             </div>
                                         </div>
@@ -254,46 +272,46 @@ const BeneficiaryDonationDetail = () => {
                         </div>
 
                         {/* Right Column - Status & Actions */}
-                        <div className="space-y-6">
+                        <div className="lg:col-span-4 space-y-8">
                             {/* Status Card */}
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-50">
-                                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Status</h3>
-                                <div className={`px-4 py-3 rounded-xl font-bold text-sm text-center ${donation.status === 'Available' ? 'bg-green-100 text-green-700' :
-                                        donation.status === 'Pending Pickup' ? 'bg-[#98E158] text-white' :
-                                            donation.status === 'Delivered' ? 'bg-green-600 text-white' :
-                                                'bg-gray-100 text-gray-700'
-                                    }`}>
-                                    {donation.status}
+                            <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 text-center">
+                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Availability</h3>
+                                <div className={`inline-block px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest shadow-sm ${getStatusStyles()}`}>
+                                    {displayStatus}
                                 </div>
+                                {isExpired && donation.status === 'Available' && (
+                                    <p className="mt-4 text-[10px] font-bold text-red-400 uppercase tracking-widest leading-relaxed px-4">
+                                        This donation has reached its expiry time.
+                                    </p>
+                                )}
                             </div>
 
                             {/* Action Button */}
-                            {donation.status === 'Available' && (
-                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-50">
-                                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Ready to help?</h3>
+                            {donation.status === 'Available' && !isExpired && (
+                                <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 text-center">
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Reserve Now</h3>
                                     <button
                                         onClick={handleClaim}
-                                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-green-600 hover:bg-green-700 text-white font-bold text-base rounded-xl transition-all shadow-lg hover:shadow-xl active:scale-95"
+                                        className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-green-600 hover:bg-green-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-green-600/20 active:scale-95"
                                     >
-                                        <Navigation2 size={20} className="rotate-90" />
-                                        Claim Now
+                                        <Navigation2 size={18} className="rotate-90" />
+                                        CLAIM THIS FOOD
                                     </button>
-                                    {/* <p className="text-[10px] text-center text-gray-400 mt-4 px-2 italic">
-                                        By claiming, you commit to picking up this donation at the specified location and time.
-                                    </p> */}
+                                    <p className="mt-4 text-[10px] font-bold text-gray-300 uppercase tracking-widest">
+                                        Secure this for pickup
+                                    </p>
                                 </div>
                             )}
 
-                            {/* Help Card */}
-                            <div className="bg-green-900 rounded-2xl p-6 shadow-lg text-white">
-                                <h3 className="text-xs font-black text-green-300 uppercase tracking-widest mb-3">Donor Info</h3>
-                                <p className="text-sm leading-relaxed mb-4">
-                                    This donation is provided by <strong>{donation.donor_name}</strong>.
-                                    {/* Please ensure you have transport ready before claiming. */}
+                            {/* Info Card */}
+                            <div className="bg-green-900 rounded-[2rem] p-8 shadow-xl text-white">
+                                <h3 className="text-[10px] font-black text-green-300 uppercase tracking-widest mb-4">Donation Mission</h3>
+                                <p className="text-sm font-medium leading-relaxed mb-6 text-green-50/80">
+                                    Your claim helps reduce local food waste. Please ensure you can collect this item within the available hours.
                                 </p>
-                                <div className="flex items-center gap-2 text-green-300 font-bold text-[10px] uppercase tracking-wider">
+                                <div className="flex items-center gap-2 text-green-300 font-black text-[10px] uppercase tracking-widest">
                                     <Utensils size={14} />
-                                    Fighting Food Waste
+                                    Zero Hunger Project
                                 </div>
                             </div>
                         </div>
