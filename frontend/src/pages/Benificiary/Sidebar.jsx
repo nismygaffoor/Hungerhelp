@@ -23,11 +23,12 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed }) => {
 
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: <Timer size={22} />, path: '/beneficiary/dashboard' },
-        { id: 'profile', label: 'Your Profile', icon: <User size={22} />, path: '/beneficiary/profile' },
-        { id: 'claim', label: 'Claim Foods', icon: <Search size={22} />, path: '/beneficiary/claim' },
-        { id: 'myclaims', label: 'My claims', icon: <List size={22} />, path: '/beneficiary/history' },
+        { id: 'claim', label: 'Find Food', icon: <Search size={22} />, path: '/beneficiary/claim' },
+        { id: 'myclaims', label: 'My Claims', icon: <List size={22} />, path: '/beneficiary/history' },
         { id: 'request', label: 'Request Food', icon: <PlusCircle size={22} />, path: '/beneficiary/request' },
-        { id: 'feedback', label: 'Feedback', icon: <FileText size={22} />, path: '/beneficiary/feedback' },
+        { id: 'myrequests', label: 'My Requests', icon: <FileText size={22} />, path: '/beneficiary/my-requests' },
+        { id: 'profile', label: 'Your Profile', icon: <User size={22} />, path: '/beneficiary/profile' },
+        { id: 'feedback', label: 'Feedback', icon: <MessageSquare size={22} />, path: '/beneficiary/feedback' },
     ];
 
     const handleLogout = () => {
