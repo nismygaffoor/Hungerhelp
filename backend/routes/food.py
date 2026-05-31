@@ -8,6 +8,7 @@ from bson.objectid import ObjectId
 
 food_bp = Blueprint('food', __name__)
 from models.claim import Claim
+from utils.location_helpers import normalize_location_data
 
 # ... (removed redundant claim_post)
 
@@ -28,8 +29,14 @@ def create_post():
     else:
         data = request.form.to_dict()
 
-    if not data or 'food_type' not in data or 'location' not in data:
-        return jsonify({"error": "Missing required fields (food_type, location)"}), 400
+    if not data or 'food_type' not in data:
+        return jsonify({"error": "Missing required fields (food_type)"}), 400
+
+    data = normalize_location_data(data)
+    if not data.get('district') or not data.get('city'):
+        return jsonify({"error": "District and city are required"}), 400
+    if not data.get('location'):
+        return jsonify({"error": "Location is required"}), 400
 
     # parse items if present (sent as JSON string from frontend)
     import json
@@ -140,6 +147,16 @@ def get_posts():
                 donor_cache[donor_id] = "Unknown Donor"
         post['donor_name'] = donor_cache[donor_id]
 
+    district_filter = request.args.get('district', '').strip()
+    if district_filter:
+        def _matches_district(post):
+            if post.get('district', '').strip() == district_filter:
+                return True
+            address = (post.get('location') or '').split(' | ')[0].strip()
+            return address.startswith(f"{district_filter},") or address == district_filter
+
+        filtered_posts = [post for post in filtered_posts if _matches_district(post)]
+
     return jsonify(filtered_posts), 200
 
 @food_bp.route('/fulfill-request', methods=['POST'])
@@ -183,11 +200,22 @@ def fulfill_request():
         data['status'] = 'Claimed'
         data['claimed_by'] = ObjectId(beneficiary_id)
         data['claimed_at'] = datetime.utcnow()
+        data['matched_request_id'] = request_id
+        data['is_recurring'] = False
+
+        if isinstance(data.get('is_recurring'), str):
+            data['is_recurring'] = data['is_recurring'].lower() == 'true'
+        if isinstance(data.get('is_urgent'), str):
+            data['is_urgent'] = data['is_urgent'].lower() == 'true'
         
         # Convert items if present
         if 'items' in data:
             import json
             data['items'] = json.loads(data['items'])
+
+        data = normalize_location_data(data)
+        if not data.get('district') or not data.get('city'):
+            return jsonify({"error": "District and city are required"}), 400
 
         post_id = FoodPost.create(data)
 
@@ -279,6 +307,20 @@ def get_my_posts():
     # --- END AUTOMATION ---
 
     posts = FoodPost.get_by_donor(current_user['user_id'], is_recurring=False)
+
+    from models.user import User
+    for post in posts:
+        claimed_by = post.get('claimed_by')
+        if claimed_by:
+            try:
+                beneficiary = User.collection.find_one({"_id": ObjectId(claimed_by)}, {"name": 1})
+                if beneficiary:
+                    post['beneficiary_name'] = beneficiary.get('name', 'Beneficiary')
+            except Exception:
+                pass
+        if post.get('matched_request_id'):
+            post['is_request_match'] = True
+
     return jsonify(posts), 200
 
 @food_bp.route('/my-recurring', methods=['GET'])
@@ -294,68 +336,144 @@ def get_my_recurring():
 def get_donor_stats():
     """
     Get dashboard statistics for the logged-in donor.
-    Returns: total posts, active posts, delivered count, and recent donations.
+    Returns donation counts, recent activity, in-progress items, and community requests.
     """
+    from datetime import datetime, timedelta
+    from models.request import FoodRequest
+    from models.user import User
+
     current_user = request.user_data
+    if current_user['role'] != 'Donor':
+        return jsonify({"message": "Unauthorized"}), 403
+
     donor_id = current_user['user_id']
-    
-    # Get all posts by this donor
-    all_posts = list(FoodPost.collection.find({"donor_id": donor_id}))
-    
-    # Calculate statistics
-    total_posts = len(all_posts)
-    active_posts = len([p for p in all_posts if p.get('status') in ['Available', 'Active']])
-    delivered_posts = len([p for p in all_posts if p.get('status') == 'Delivered'])
-    
-    # Get recent 5 donations sorted by creation date
-    recent_donations = sorted(all_posts, key=lambda x: x.get('_id'), reverse=True)[:5]
-    
-    # Format recent donations for frontend
-    formatted_recent = []
-    for post in recent_donations:
-        formatted_recent.append({
-            '_id': str(post['_id']),
+    IN_PROGRESS_STATUSES = ['Claimed', 'Pending Pickup', 'In Transit']
+    ACTIVE_STATUSES = ['Available', 'Active']
+
+    donation_posts = FoodPost.get_by_donor(donor_id, is_recurring=False)
+    recurring_posts = FoodPost.get_by_donor(donor_id, is_recurring=True)
+
+    total_donations = len(donation_posts)
+    active_donations = len([p for p in donation_posts if p.get('status') in ACTIVE_STATUSES])
+    in_progress = len([p for p in donation_posts if p.get('status') in IN_PROGRESS_STATUSES])
+    delivered_donations = len([p for p in donation_posts if p.get('status') == 'Delivered'])
+    request_matches = len([p for p in donation_posts if p.get('matched_request_id')])
+    recurring_active = len([p for p in recurring_posts if p.get('status') in ACTIVE_STATUSES])
+
+    claimed_ids = set()
+    for post in donation_posts:
+        claimed_by = post.get('claimed_by')
+        if claimed_by:
+            claimed_ids.add(claimed_by if isinstance(claimed_by, str) else str(claimed_by))
+
+    beneficiary_names = {}
+    if claimed_ids:
+        oids = []
+        for cid in claimed_ids:
+            try:
+                oids.append(ObjectId(cid))
+            except Exception:
+                pass
+        if oids:
+            beneficiary_names = {
+                str(b['_id']): b.get('name', 'Beneficiary')
+                for b in User.collection.find({"_id": {"$in": oids}}, {"name": 1})
+            }
+
+    def format_post(post):
+        claimed_by = post.get('claimed_by')
+        beneficiary_name = beneficiary_names.get(str(claimed_by), '') if claimed_by else ''
+        created_at = post.get('created_at')
+        if not created_at and hasattr(post.get('_id'), 'generation_time'):
+            created_at = post['_id'].generation_time.isoformat()
+        elif hasattr(created_at, 'isoformat'):
+            created_at = created_at.isoformat()
+        return {
+            '_id': post['_id'],
             'food_type': post.get('food_type', ''),
             'quantity': post.get('quantity', ''),
             'location': post.get('location', ''),
             'status': post.get('status', 'Available'),
             'images': post.get('images', []),
+            'items': post.get('items', []),
             'is_urgent': post.get('is_urgent', False),
-            'is_recurring': post.get('is_recurring', False),
-            'created_at': str(post.get('_id').generation_time) if hasattr(post.get('_id'), 'generation_time') else ''
-        })
-    
-    # Get upcoming recurring donations (active recurring posts)
-    recurring_posts = [p for p in all_posts if p.get('is_recurring') and p.get('status') in ['Available', 'Active']]
+            'is_recurring': FoodPost._as_bool(post.get('is_recurring'), False),
+            'is_request_match': bool(post.get('matched_request_id')),
+            'beneficiary_name': beneficiary_name,
+            'expiry_time': post.get('expiry_time', ''),
+            'created_at': str(created_at) if created_at else '',
+        }
+
+    recent_donations = [format_post(p) for p in donation_posts[:5]]
+    in_progress_donations = [
+        format_post(p) for p in donation_posts
+        if p.get('status') in IN_PROGRESS_STATUSES
+    ][:5]
+
     upcoming_donations = []
-    for post in recurring_posts[:3]:  # Limit to 3 upcoming
+    for post in recurring_posts:
+        if post.get('status') not in ACTIVE_STATUSES:
+            continue
         food_name = post.get('food_type', 'Recurring Donation').split(' - ')[0]
         frequency = post.get('frequency', 'Weekly')
         day = post.get('day', 'Monday')
         upcoming_donations.append({
             'title': food_name,
-            'time': f'{frequency} - {day}'
+            'time': f'{frequency} · {day}',
         })
-    
-    # Calculate monthly donation counts for the last 6 months
-    from datetime import datetime, timedelta
+        if len(upcoming_donations) >= 3:
+            break
+
+    open_requests_count = FoodRequest.collection.count_documents({"status": "Active"})
+    recent_community_requests = []
+    for req in FoodRequest.get_all_active()[:3]:
+        items = req.get('items') or []
+        recent_community_requests.append({
+            'id': req['_id'],
+            'title': items[0].get('category', req.get('food_type', 'Food Request')) if items else req.get('food_type', 'Food Request'),
+            'beneficiary_name': req.get('beneficiary_name', 'Beneficiary'),
+            'urgency': req.get('urgency', 'Normal'),
+            'district': req.get('district', ''),
+        })
+
     monthly_counts = [0] * 6
-    current_date = datetime.now()
-    
-    for post in all_posts:
-        if hasattr(post.get('_id'), 'generation_time'):
-            post_date = post['_id'].generation_time
-            months_ago = (current_date.year - post_date.year) * 12 + (current_date.month - post_date.month)
-            if 0 <= months_ago < 6:
-                monthly_counts[5 - months_ago] += 1
-    
+    month_labels = []
+    current_date = datetime.utcnow()
+    for i in range(5, -1, -1):
+        month_date = current_date - timedelta(days=i * 30)
+        month_labels.append(month_date.strftime('%b'))
+
+    for post in donation_posts:
+        created_at = post.get('created_at')
+        if isinstance(created_at, str):
+            try:
+                post_date = datetime.fromisoformat(created_at.replace('Z', '+00:00').split('+')[0])
+            except Exception:
+                continue
+        elif hasattr(created_at, 'year'):
+            post_date = created_at
+        elif hasattr(post.get('_id'), 'generation_time'):
+            post_date = post['_id'].generation_time.replace(tzinfo=None)
+        else:
+            continue
+        months_ago = (current_date.year - post_date.year) * 12 + (current_date.month - post_date.month)
+        if 0 <= months_ago < 6:
+            monthly_counts[5 - months_ago] += 1
+
     return jsonify({
-        'total_donations': total_posts,
-        'active_donations': active_posts,
-        'delivered_donations': delivered_posts,
-        'recent_donations': formatted_recent,
+        'total_donations': total_donations,
+        'active_donations': active_donations,
+        'in_progress': in_progress,
+        'delivered_donations': delivered_donations,
+        'request_matches': request_matches,
+        'recurring_active': recurring_active,
+        'open_requests_count': open_requests_count,
+        'recent_donations': recent_donations,
+        'in_progress_donations': in_progress_donations,
+        'recent_community_requests': recent_community_requests,
         'upcoming_donations': upcoming_donations,
-        'monthly_counts': monthly_counts
+        'monthly_counts': monthly_counts,
+        'month_labels': month_labels,
     }), 200
 
 @food_bp.route('/<post_id>', methods=['GET'])
@@ -551,6 +669,8 @@ def update_post(post_id):
                 all_current_images.append(img)
                 
     data['images'] = all_current_images
+
+    data = normalize_location_data(data)
 
     success, message = FoodPost.update(post_id, current_user['user_id'], data)
     

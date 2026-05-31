@@ -13,7 +13,8 @@ CORS(app) # Enable CORS for frontend communication
 # Configure Upload Folder
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-os.makedirs(os.path.join(UPLOAD_FOLDER, 'food_posts'), exist_ok=True)#Creates folders if they don’t exist
+os.makedirs(os.path.join(UPLOAD_FOLDER, 'food_posts'), exist_ok=True)
+os.makedirs(os.path.join(UPLOAD_FOLDER, 'verification_docs'), exist_ok=True)
 
 from flask import send_from_directory
 @app.route('/uploads/<path:filename>')
@@ -36,6 +37,12 @@ from routes.admin import admin_bp
 from routes.users import users_bp
 from routes.delivery import delivery_bp
 from routes.requests import requests_bp
+from routes.feedback import feedback_bp
+
+@app.before_request
+def enforce_verified_platform_access():
+    from middleware.auth_middleware import check_platform_access
+    return check_platform_access()
 
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(food_bp, url_prefix='/food')
@@ -44,6 +51,7 @@ app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(users_bp, url_prefix='/users')
 app.register_blueprint(delivery_bp, url_prefix='/delivery')
 app.register_blueprint(requests_bp, url_prefix='/requests')
+app.register_blueprint(feedback_bp, url_prefix='/feedback')
 
 @app.route('/')
 def home():
@@ -62,4 +70,4 @@ def home():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, use_reloader=False)

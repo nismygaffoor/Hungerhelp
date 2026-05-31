@@ -1,32 +1,41 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import AdminLogin from './pages/Admin/AdminLogin';
 import Register from './pages/Register';
 import LandingPage from './pages/LandingPage';
 import About from './pages/About';
+import { isAccessLocked, PROFILE_BY_ROLE } from './utils/verificationAccess';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user } = useAuth();
+  const { t } = useTranslation();
+  const pathname = window.location.pathname;
 
   if (!user) {
-    // Determine if we're trying to access an ADMIN route
-    const isAdminRoute = window.location.pathname.startsWith('/admin');
-    const isAdminLoginPage = window.location.pathname === '/admin/login';
+    const isAdminRoute = pathname.startsWith('/admin');
+    const isAdminLoginPage = pathname === '/admin/login';
 
     if (isAdminRoute && !isAdminLoginPage) {
       return <Navigate to="/admin/login" replace />;
     }
 
-    // Only redirect to public login if NOT already on an admin login page
     if (!isAdminLoginPage) {
       return <Navigate to="/login" replace />;
     }
   }
 
+  if (user && isAccessLocked(user)) {
+    const profilePath = PROFILE_BY_ROLE[user.role];
+    if (profilePath && pathname !== profilePath) {
+      return <Navigate to={profilePath} replace state={{ verificationNotice: true }} />;
+    }
+  }
+
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <div className="p-10 text-center text-red-500">Access Denied: You do not have permission to view this page.</div>;
+    return <div className="p-10 text-center text-red-500">{t('common.accessDenied')}</div>;
   }
 
   return children;
@@ -73,6 +82,11 @@ import AdminFeedback from './pages/Admin/Feedback';
 const Home = () => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
+
+  const profilePath = PROFILE_BY_ROLE[user.role];
+  if (isAccessLocked(user) && profilePath) {
+    return <Navigate to={profilePath} replace state={{ verificationNotice: true }} />;
+  }
 
   if (user.role === 'Donor') return <Navigate to="/donor/dashboard" replace />;
   if (user.role === 'Beneficiary') return <Navigate to="/beneficiary/dashboard" replace />;

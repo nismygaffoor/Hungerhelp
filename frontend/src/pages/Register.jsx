@@ -1,9 +1,15 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Leaf, User, Heart, Truck } from 'lucide-react';
+import LocationFields from '../components/location/LocationFields';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { buildLocationAddress } from '../constants/locations';
+import { LANGUAGES, getLanguageLabel, getStoredLanguage } from '../i18n/languages';
 
 const Register = () => {
+    const { t } = useTranslation();
     const [selectedRole, setSelectedRole] = useState('Donor');
     const [formData, setFormData] = useState({
         name: '',
@@ -11,9 +17,12 @@ const Register = () => {
         password: '',
         contact: '',
         address: '',
+        district: '',
+        home_address: '',
+        city: '',
         businessName: '',
         beneficiaryType: '',
-        language: '',
+        language: getLanguageLabel(getStoredLanguage()),
         experience: ''
     });
     const [error, setError] = useState('');
@@ -28,38 +37,44 @@ const Register = () => {
         e.preventDefault();
         setError('');
 
-        // Merge standard fields with role-specific notes for the backend if needed
-        // For this demo, we'll just send everything
+        if (selectedRole === 'Beneficiary' && (!formData.district || !formData.city)) {
+            setError(t('auth.districtCityRequired'));
+            return;
+        }
+
         const payload = {
             ...formData,
-            role: selectedRole
+            role: selectedRole,
+            address: formData.district
+                ? buildLocationAddress({ district: formData.district, homeAddress: formData.home_address, city: formData.city })
+                : formData.address,
         };
 
         const res = await registerUser(payload);
         if (res.success) {
             navigate('/login');
         } else {
-            setError(res.message);
+            setError(res.message || t('auth.registerFailed'));
         }
     };
 
     // Role-specific config
     const roleContent = {
         Donor: {
-            title: "Become a Donor",
-            slogan: "Share Surplus, nourish lives.",
+            title: t('auth.donorTitle'),
+            slogan: t('auth.donorSlogan'),
             icon: <Heart size={20} />,
             color: "border-green-600 bg-green-50 text-green-700"
         },
         Beneficiary: {
-            title: "Become a Beneficiary",
-            slogan: "Nourishing communities together",
+            title: t('auth.beneficiaryTitle'),
+            slogan: t('auth.beneficiarySlogan'),
             icon: <User size={20} />,
             color: "border-blue-600 bg-blue-50 text-blue-700"
         },
         Volunteer: {
-            title: "Become a Volunteer",
-            slogan: "Deliver Hope, Save Food.",
+            title: t('auth.volunteerTitle'),
+            slogan: t('auth.volunteerSlogan'),
             icon: <Truck size={20} />,
             color: "border-orange-600 bg-orange-50 text-orange-700"
         }
@@ -73,6 +88,10 @@ const Register = () => {
                 className="absolute inset-0 bg-cover bg-center z-0 opacity-80"
                 style={{ backgroundImage: "url('/login-bg.png')" }}
             ></div>
+
+            <div className="absolute top-4 right-4 z-20">
+                <LanguageSwitcher />
+            </div>
 
             {/* Register Card */}
             <div className="relative z-10 bg-white p-6 rounded-3xl shadow-2xl w-full max-w-md mx-4 border border-white/50 backdrop-blur-sm bg-white/95">
@@ -104,7 +123,7 @@ const Register = () => {
                             <div className={`p-2 rounded-full transition-colors ${selectedRole === role ? 'bg-white/50' : 'bg-gray-50'}`}>
                                 {roleContent[role].icon}
                             </div>
-                            <span className="text-[10px] font-bold uppercase tracking-wider">{role}</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider">{t(`roles.${role.toLowerCase()}`)}</span>
                         </button>
                     ))}
                 </div>
@@ -112,40 +131,75 @@ const Register = () => {
                 {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded-lg text-sm text-center font-medium">{error}</div>}
 
                 <form onSubmit={handleSubmit} className="space-y-2">
-                    <InputField placeholder="Full Name" name="name" value={formData.name} onChange={handleChange} />
+                    <InputField placeholder={t('auth.fullName')} name="name" value={formData.name} onChange={handleChange} />
 
                     {selectedRole === 'Donor' && (
-                        <InputField placeholder="Business Name (optional)" name="businessName" value={formData.businessName} onChange={handleChange} />
+                        <InputField placeholder={t('auth.businessNameOptional')} name="businessName" value={formData.businessName} onChange={handleChange} />
                     )}
 
-                    <InputField placeholder="Email" name="email" type="email" value={formData.email} onChange={handleChange} />
-                    <InputField placeholder="Phone Number" name="contact" type="tel" value={formData.contact} onChange={handleChange} />
+                    <InputField placeholder={t('auth.email')} name="email" type="email" value={formData.email} onChange={handleChange} />
+                    <InputField placeholder={t('auth.phoneNumber')} name="contact" type="tel" value={formData.contact} onChange={handleChange} />
 
                     {selectedRole === 'Beneficiary' && (
                         <>
-                            <InputField placeholder="Beneficiary Type (e.g. Elder's home,orphanage, Individual)" name="beneficiaryType" value={formData.beneficiaryType} onChange={handleChange} />
-                            <InputField placeholder="Address" name="address" value={formData.address} onChange={handleChange} />
-                            <InputField placeholder="Language preference" name="language" value={formData.language} onChange={handleChange} />
+                            <InputField placeholder={t('auth.beneficiaryType')} name="beneficiaryType" value={formData.beneficiaryType} onChange={handleChange} />
+                            <div className="py-2">
+                                <LocationFields
+                                    compact
+                                    district={formData.district}
+                                    homeAddress={formData.home_address}
+                                    city={formData.city}
+                                    onDistrictChange={(value) => setFormData({ ...formData, district: value })}
+                                    onHomeAddressChange={(value) => setFormData({ ...formData, home_address: value })}
+                                    onCityChange={(value) => setFormData({ ...formData, city: value })}
+                                />
+                            </div>
+                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">{t('auth.languagePreference')}</label>
+                            <select
+                                name="language"
+                                value={formData.language}
+                                onChange={handleChange}
+                                className="w-full border-b-2 border-gray-100 py-2 px-1 focus:outline-none focus:border-green-600 transition-colors text-base bg-white"
+                            >
+                                {LANGUAGES.map((lang) => (
+                                    <option key={lang.code} value={lang.label}>{lang.nativeLabel}</option>
+                                ))}
+                            </select>
                         </>
                     )}
 
-                    {selectedRole === 'Volunteer' && (
-                        <InputField placeholder="Experience (if any)" name="experience" value={formData.experience} onChange={handleChange} />
+                    {(selectedRole === 'Donor' || selectedRole === 'Volunteer') && (
+                        <div className="py-2">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t('auth.addressOptional')}</p>
+                            <LocationFields
+                                compact
+                                district={formData.district}
+                                homeAddress={formData.home_address}
+                                city={formData.city}
+                                onDistrictChange={(value) => setFormData({ ...formData, district: value })}
+                                onHomeAddressChange={(value) => setFormData({ ...formData, home_address: value })}
+                                onCityChange={(value) => setFormData({ ...formData, city: value })}
+                            />
+                        </div>
                     )}
 
-                    <InputField placeholder="Password" name="password" type="password" value={formData.password} onChange={handleChange} />
+                    {selectedRole === 'Volunteer' && (
+                        <InputField placeholder={t('auth.experienceOptional')} name="experience" value={formData.experience} onChange={handleChange} />
+                    )}
+
+                    <InputField placeholder={t('auth.password')} name="password" type="password" value={formData.password} onChange={handleChange} />
 
                     <button
                         type="submit"
                         className="w-full bg-[#1E5144] text-white font-bold py-2 rounded-xl shadow-lg hover:shadow-xl hover:bg-[#163d33] transition-all transform active:scale-95 text-base mt-4"
                     >
-                        SIGN UP TO HELP
+                        {t('auth.signUpToHelp')}
                     </button>
                 </form>
 
                 <div className="mt-8 text-center text-sm">
                     <p className="text-gray-500">
-                        Already have account? <Link to="/login" className="text-green-700 font-bold hover:underline">Log In</Link>
+                        {t('auth.alreadyHaveAccount')} <Link to="/login" className="text-green-700 font-bold hover:underline">{t('nav.login')}</Link>
                     </p>
                 </div>
             </div>

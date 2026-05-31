@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
 
 const Verify = () => {
+    const { t } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -13,12 +15,12 @@ const Verify = () => {
                 <Navbar onMenuClick={() => setSidebarOpen(true)} />
                 <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto">
                     <header className="mb-6 text-left">
-                        <h2 className="text-xl font-bold text-gray-900 leading-tight">Verification Requests</h2>
-                        <p className="text-gray-500 text-sm mt-1">Review and approve verification requests for new platform members.</p>
+                        <h2 className="text-xl font-bold text-gray-900 leading-tight">{t('admin.verifyTitle')}</h2>
+                        <p className="text-gray-500 text-sm mt-1">{t('admin.verifySubtitle')}</p>
                     </header>
                     <div className="bg-white border border-gray-100 rounded-3xl p-12 text-center shadow-sm">
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Pending Verifications</h3>
-                        <p className="text-gray-500">Review and approve verification requests for new platform members.</p>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2">{t('admin.pendingVerificationsTitle')}</h3>
+                        <p className="text-gray-500">{t('admin.verifySubtitle')}</p>
                     </div>
                 </div>
             </main>

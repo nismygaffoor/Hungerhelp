@@ -6,28 +6,49 @@ class FoodPost:
     collection = db.food_posts
 
     @staticmethod
+    def _donor_id_filter(donor_id):
+        try:
+            oid = ObjectId(donor_id)
+            return {"$or": [{"donor_id": oid}, {"donor_id": str(donor_id)}]}
+        except Exception:
+            return {"donor_id": donor_id}
+
+    @staticmethod
+    def _as_bool(value, default=False):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.lower() == 'true'
+        return default
+
+    @staticmethod
     def create(data):
         """
         data: dict with donor_id, food_type, quantity, location, expiry_time, description, is_recurring, frequency, day
         """
         post_doc = {
-            "donor_id": data['donor_id'],
+            "donor_id": str(data['donor_id']),
             "food_type": data['food_type'],
             "quantity": data['quantity'],
             "location": data['location'],
+            "district": data.get('district', ''),
+            "home_address": data.get('home_address', data.get('home_no', '')),
+            "city": data.get('city', data.get('road', '')),
             "expiry_time": data.get('expiry_time'),
             "description": data.get('description', ""),
             "images": data.get('images', []),
             "status": data.get('status', "Available"),
-            "is_recurring": data.get('is_recurring', False),
-            "is_urgent": data.get('is_urgent', False),
+            "is_recurring": FoodPost._as_bool(data.get('is_recurring'), False),
+            "is_urgent": FoodPost._as_bool(data.get('is_urgent'), False),
             "frequency": data.get('frequency', ""),
             "day": data.get('day', ""),
             "destination": data.get('destination', ""),
             "items": data.get('items', []),
-            "destination": data.get('destination', ""),  # Legacy field for backward compatibility
-            "destination_type": data.get('destination_type', ""),  # e.g., "Elder's Home", "Orphanage"
-            "destination_name": data.get('destination_name', ""),  # Specific beneficiary name
+            "destination_type": data.get('destination_type', ""),
+            "destination_name": data.get('destination_name', ""),
+            "claimed_by": data.get('claimed_by'),
+            "claimed_at": data.get('claimed_at'),
+            "matched_request_id": data.get('matched_request_id', ''),
             "created_at": datetime.utcnow()
         }
         result = FoodPost.collection.insert_one(post_doc)
@@ -66,9 +87,18 @@ class FoodPost:
 
     @staticmethod
     def get_by_donor(donor_id, is_recurring=None):
-        query = {"donor_id": donor_id}
+        query = FoodPost._donor_id_filter(donor_id)
         if is_recurring is not None:
-            query["is_recurring"] = is_recurring
+            if is_recurring is False:
+                recurring_filter = {"$or": [
+                    {"is_recurring": False},
+                    {"is_recurring": {"$exists": False}},
+                    {"is_recurring": "false"},
+                    {"is_recurring": None},
+                ]}
+            else:
+                recurring_filter = {"is_recurring": True}
+            query = {"$and": [query, recurring_filter]}
             
         cursor = FoodPost.collection.find(query).sort("_id", -1)
         posts = []
@@ -93,7 +123,7 @@ class FoodPost:
             return False, "Post not found"
         
         # Check permissions
-        if role != 'Admin' and post['donor_id'] != user_id:
+        if role != 'Admin' and str(post.get('donor_id')) != str(user_id):
             return False, "Unauthorized"
 
         FoodPost.collection.delete_one(query)
@@ -109,7 +139,7 @@ class FoodPost:
         # Build update document
         update_fields = {}
         allowed_fields = [
-            'food_type', 'quantity', 'location', 'expiry_time', 
+            'food_type', 'quantity', 'location', 'district', 'home_address', 'city', 'expiry_time', 
             'description', 'is_recurring', 'is_urgent', 
             'frequency', 'day', 'destination', 'status', 'items',
             'destination_type', 'destination_name', 'images'

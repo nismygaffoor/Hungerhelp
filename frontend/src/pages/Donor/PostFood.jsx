@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
+import {
+    CATEGORY_KEY_MAP,
+    BENEFICIARY_TYPE_KEY_MAP,
+    translateBeneficiaryType,
+} from '../../i18n/donorVolunteerI18n';
 import api from '../../api/axios';
-import { useAuth } from '../../context/AuthContext';
 import {
     Camera,
-    MapPin,
     Clock,
     Utensils,
     Scale,
@@ -15,13 +19,33 @@ import {
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
+import LocationFields from '../../components/location/LocationFields';
+import { buildLocationAddress } from '../../constants/locations';
+
+const FREQUENCY_OPTIONS = [
+    { value: 'Daily', key: 'daily' },
+    { value: 'Weekly', key: 'weekly' },
+    { value: 'Monthly', key: 'monthly' },
+];
+
+const DAY_OPTIONS = [
+    { value: 'Monday', key: 'monday' },
+    { value: 'Tuesday', key: 'tuesday' },
+    { value: 'Wednesday', key: 'wednesday' },
+    { value: 'Thursday', key: 'thursday' },
+    { value: 'Friday', key: 'friday' },
+    { value: 'Saturday', key: 'saturday' },
+    { value: 'Sunday', key: 'sunday' },
+];
 
 const PostFood = () => {
-    const { user } = useAuth();
+    const { t } = useTranslation();
     const locationState = useLocation();
     const [items, setItems] = useState([{ category: '', name: '', quantity: '', images: [], previews: [] }]);
     const [description, setDescription] = useState('');
-    const [location, setLocation] = useState(user?.address || '');
+    const [district, setDistrict] = useState('');
+    const [homeAddress, setHomeAddress] = useState('');
+    const [city, setCity] = useState('');
     const [pickupTimes, setPickupTimes] = useState('');
     const [isUrgent, setIsUrgent] = useState(false);
     const [isRecurring, setIsRecurring] = useState(false);
@@ -53,7 +77,6 @@ const PostFood = () => {
             setMatchRequestId(requestId);
             setMatchBeneficiaryId(beneficiaryId);
 
-            // Map items to include empty image/preview arrays
             const formattedItems = matchedItems.map(item => ({
                 category: item.category,
                 name: item.name || '',
@@ -67,7 +90,6 @@ const PostFood = () => {
             setDestinationType(beneficiaryType);
             setIsUrgent(locationState.state.matchRequest.urgency === 'High');
             
-            // Clean up the state so it doesn't re-fill if the user navigates away and back
             window.history.replaceState({}, document.title);
         }
     }, [locationState.state]);
@@ -144,7 +166,7 @@ const PostFood = () => {
         const currentItem = items[index];
 
         if (currentItem.images.length + files.length > 1) {
-            alert("Maximum 1 image per item allowed.");
+            alert(t('donor.postFood.maxImageAlert'));
             return;
         }
 
@@ -171,10 +193,9 @@ const PostFood = () => {
     };
 
     const handlePost = async () => {
-        // Validate all items
         const invalidItems = items.some(item => !item.category || !item.quantity);
-        if (invalidItems || !location) {
-            alert("Please fill in required fields for all items.");
+        if (invalidItems || !district || !city) {
+            alert(t('donor.postFood.requiredFieldsAlert'));
             return;
         }
 
@@ -187,7 +208,11 @@ const PostFood = () => {
             const formData = new FormData();
             formData.append('food_type', finalFoodType);
             formData.append('quantity', quantityString);
-            formData.append('location', `${location} | ${pickupTimes}`);
+            formData.append('district', district);
+            formData.append('home_address', homeAddress);
+            formData.append('city', city);
+            formData.append('pickup_times', pickupTimes);
+            formData.append('location', buildLocationAddress({ district, homeAddress, city }));
             formData.append('expiry_time', new Date(expiryDate).toISOString());
             formData.append('description', description);
             formData.append('is_recurring', isRecurring);
@@ -223,9 +248,8 @@ const PostFood = () => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            alert(matchRequestId ? 'Request fulfilled successfully!' : 'Food posted successfully!');
+            alert(matchRequestId ? t('donor.postFood.fulfillSuccess') : t('donor.postFood.postSuccess'));
             
-            // Reset
             setItems([{ category: '', name: '', quantity: '', images: [], previews: [] }]);
             setDescription('');
             setPickupTimes('');
@@ -235,7 +259,7 @@ const PostFood = () => {
             setDestinationType('');
             setDestinationName('');
         } catch (err) {
-            alert('Failed to process post.');
+            alert(t('donor.postFood.postFailed'));
         } finally {
             setLoading(false);
         }
@@ -249,19 +273,18 @@ const PostFood = () => {
                 <Navbar onMenuClick={() => setSidebarOpen(true)} />
                 <div className="p-4 md:p-6">
                     <header className="mb-6 text-left">
-                        <h2 className="text-xl font-bold text-gray-900 leading-tight">Post Food</h2>
-                        <p className="text-gray-500 text-sm mt-1">Share surplus food with those in need.</p>
+                        <h2 className="text-xl font-bold text-gray-900 leading-tight">{t('donor.postFood.title')}</h2>
+                        <p className="text-gray-500 text-sm mt-1">{t('donor.postFood.subtitle')}</p>
                     </header>
 
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
-                        <h3 className="text-xl font-bold mb-6 text-gray-800">Food Details</h3>
+                        <h3 className="text-xl font-bold mb-6 text-gray-800">{t('donor.postFood.foodDetails')}</h3>
                         <div className="space-y-6">
                             <div className="space-y-3">
-                                <label className="block text-sm font-semibold text-gray-600">Donated Items</label>
+                                <label className="block text-sm font-semibold text-gray-600">{t('donor.postFood.donatedItems')}</label>
                                 <div className="space-y-3">
                                     {items.map((item, index) => (
                                         <div key={index} className="flex flex-col md:flex-row items-center gap-3 p-3 bg-gray-50/50 rounded-2xl border border-gray-100 animate-fade-in group hover:bg-gray-50 hover:border-gray-200 transition-all">
-                                            {/* Category Input */}
                                             <div className="w-full md:flex-[2] relative">
                                                 <Utensils className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                                 <select
@@ -269,46 +292,36 @@ const PostFood = () => {
                                                     value={item.category}
                                                     onChange={e => handleItemChange(index, 'category', e.target.value)}
                                                 >
-                                                    <option value="" disabled>Select Type</option>
-                                                    <option value="Vegetables">Vegetables</option>
-                                                    <option value="Fruits">Fruits</option>
-                                                    <option value="Cooked Meals">Cooked Meals</option>
-                                                    <option value="Baked Goods">Baked Goods</option>
-                                                    <option value="Grains & Rice">Grains & Rice</option>
-                                                    <option value="Dairy">Dairy</option>
-                                                    <option value="Meat & Poultry">Meat & Poultry</option>
-                                                    <option value="Canned Food">Canned Food</option>
-                                                    <option value="Beverages">Beverages</option>
-                                                    <option value="Other">Other</option>
+                                                    <option value="" disabled>{t('donor.postFood.selectType')}</option>
+                                                    {Object.entries(CATEGORY_KEY_MAP).map(([value, key]) => (
+                                                        <option key={value} value={value}>{t(`donor.categories.${key}`)}</option>
+                                                    ))}
                                                 </select>
                                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                                             </div>
 
-                                            {/* Name Input */}
                                             <div className="w-full md:flex-[2] relative">
                                                 <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                                 <input
                                                     type="text"
-                                                    placeholder="Item Name (e.g. Basmati Rice)"
+                                                    placeholder={t('donor.postFood.itemNamePlaceholder')}
                                                     className="w-full border border-gray-100 bg-white rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all text-sm"
                                                     value={item.name || ''}
                                                     onChange={e => handleItemChange(index, 'name', e.target.value)}
                                                 />
                                             </div>
 
-                                            {/* Quantity Input */}
                                             <div className="w-full md:flex-1 relative">
                                                 <Scale className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                                 <input
                                                     type="text"
-                                                    placeholder="Qty"
+                                                    placeholder={t('donor.postFood.qty')}
                                                     className="w-full border border-gray-100 bg-white rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all text-sm"
                                                     value={item.quantity}
                                                     onChange={e => handleItemChange(index, 'quantity', e.target.value)}
                                                 />
                                             </div>
 
-                                            {/* Photos Section */}
                                             <div className="flex items-center gap-2 px-1">
                                                 <div className="flex gap-1.5 scrollbar-none overflow-x-auto max-w-[120px]">
                                                     {item.previews.map((preview, imgIndex) => (
@@ -338,12 +351,11 @@ const PostFood = () => {
                                                 )}
                                             </div>
 
-                                            {/* Remove Item Button */}
                                             {items.length > 1 && (
                                                 <button
                                                     onClick={() => removeItem(index)}
                                                     className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                    title="Remove item"
+                                                    title={t('donor.postFood.removeItem')}
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
@@ -355,17 +367,17 @@ const PostFood = () => {
                                     onClick={addItem}
                                     className="text-xs font-bold text-green-600 hover:text-green-700 flex items-center gap-2 px-2 py-1 mt-2 transition-all hover:translate-x-1"
                                 >
-                                    + Add Another Item
+                                    {t('donor.postFood.addAnotherItem')}
                                 </button>
                             </div>
 
                             <div className="pt-2">
-                                <label className="block text-sm font-semibold text-gray-600 mb-2">Description</label>
+                                <label className="block text-sm font-semibold text-gray-600 mb-2">{t('donor.postFood.description')}</label>
                                 <div className="relative">
                                     <FileText className="absolute left-3 top-4 text-gray-400" size={18} />
                                     <textarea
                                         rows="3"
-                                        placeholder="Briefly describe the food items..."
+                                        placeholder={t('donor.postFood.descriptionPlaceholder')}
                                         className="w-full border border-gray-100 bg-gray-50/50 rounded-xl pl-10 pr-4 py-3.5 focus:ring-2 focus:ring-green-500 focus:bg-white focus:outline-none transition-all text-sm resize-none"
                                         value={description}
                                         onChange={e => setDescription(e.target.value)}
@@ -375,34 +387,27 @@ const PostFood = () => {
                         </div>
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in relative pb-20">
-                        {/* Left Column */}
-
                         <div className="space-y-8">
-
-                            {/* Pickup Information */}
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                                <h3 className="text-xl font-bold mb-6 text-gray-800">Pickup Information</h3>
+                                <h3 className="text-xl font-bold mb-6 text-gray-800">{t('donor.postFood.pickupInfo')}</h3>
                                 <div className="space-y-6">
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-600 mb-2">Pickup Location</label>
-                                        <div className="relative">
-                                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                            <input
-                                                type="text"
-                                                placeholder="e.g., 123 Main St, Anytown"
-                                                className="w-full border border-gray-100 bg-gray-50/50 rounded-xl pl-10 pr-4 py-3.5 focus:ring-2 focus:ring-green-500 focus:bg-white focus:outline-none transition-all text-sm"
-                                                value={location}
-                                                onChange={e => setLocation(e.target.value)}
-                                            />
-                                        </div>
+                                        <LocationFields
+                                            district={district}
+                                            homeAddress={homeAddress}
+                                            city={city}
+                                            onDistrictChange={setDistrict}
+                                            onHomeAddressChange={setHomeAddress}
+                                            onCityChange={setCity}
+                                        />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-600 mb-2">Available Pickup Times</label>
+                                        <label className="block text-sm font-semibold text-gray-600 mb-2">{t('donor.postFood.pickupTimes')}</label>
                                         <div className="relative">
                                             <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                             <input
                                                 type="text"
-                                                placeholder="e.g., Mon-Fri 9 AM - 5 PM"
+                                                placeholder={t('donor.postFood.pickupTimesPlaceholder')}
                                                 className="w-full border border-gray-100 bg-gray-50/50 rounded-xl pl-10 pr-4 py-3.5 focus:ring-2 focus:ring-green-500 focus:bg-white focus:outline-none transition-all text-sm"
                                                 value={pickupTimes}
                                                 onChange={e => setPickupTimes(e.target.value)}
@@ -410,7 +415,7 @@ const PostFood = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-600 mb-2">Food Expiry Date & Time</label>
+                                        <label className="block text-sm font-semibold text-gray-600 mb-2">{t('donor.postFood.expiryDateTime')}</label>
                                         <div className="relative">
                                             <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                             <input
@@ -420,59 +425,56 @@ const PostFood = () => {
                                                 onChange={e => setExpiryDate(e.target.value)}
                                             />
                                         </div>
-                                        <p className="text-[10px] text-gray-400 mt-1 ml-1 italic">Please specify when the food will no longer be safe to consume.</p>
+                                        <p className="text-[10px] text-gray-400 mt-1 ml-1 italic">{t('donor.postFood.expiryHint')}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        {/* Right Column */}
                         <div className="space-y-8">
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                                <h3 className="text-xl font-bold mb-2 text-gray-800">Scheduling & Urgency</h3>
+                                <h3 className="text-xl font-bold mb-2 text-gray-800">{t('donor.postFood.schedulingUrgency')}</h3>
                                 <div className="space-y-8 mt-6">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-sm font-bold text-gray-700">Set up as a recurring donation</span>
+                                        <span className="text-sm font-bold text-gray-700">{t('donor.postFood.recurringToggle')}</span>
                                         <button onClick={() => setIsRecurring(!isRecurring)} className={`w-12 h-6 rounded-full relative transition-colors ${isRecurring ? 'bg-green-600' : 'bg-gray-300'}`}>
                                             <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${isRecurring ? 'left-7' : 'left-1'}`}></div>
                                         </button>
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-bold text-gray-700">Mark as urgent</span>
+                                            <span className="text-sm font-bold text-gray-700">{t('donor.postFood.urgentToggle')}</span>
                                             <button onClick={() => setIsUrgent(!isUrgent)} className={`w-12 h-6 rounded-full relative transition-colors ${isUrgent ? 'bg-green-600' : 'bg-gray-300'}`}>
                                                 <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${isUrgent ? 'left-7' : 'left-1'}`}></div>
                                             </button>
                                         </div>
-                                        <p className="text-[11px] text-gray-400 italic">Urgent alerts notify volunteers immediately for time-sensitive food items.</p>
+                                        <p className="text-[11px] text-gray-400 italic">{t('donor.postFood.urgentHint')}</p>
                                     </div>
 
                                     <div className="space-y-4 pt-6 border-t border-gray-50">
-                                        <h4 className="text-sm font-bold text-gray-800">Target Beneficiary</h4>
+                                        <h4 className="text-sm font-bold text-gray-800">{t('donor.postFood.targetBeneficiary')}</h4>
                                         <div>
                                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                                Beneficiary Type <span className="text-red-500">*</span>
+                                                {t('donor.postFood.beneficiaryType')} <span className="text-red-500">{t('donor.postFood.required')}</span>
                                             </label>
                                             <select
                                                 className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer"
                                                 value={destinationType}
                                                 onChange={(e) => setDestinationType(e.target.value)}
                                             >
-                                                <option value="">All Beneficiaries (Public)</option>
-                                                <option value="Elder's Home">Elder's Home</option>
-                                                <option value="Orphanage">Orphanage</option>
-                                                <option value="Individual">Individual</option>
-                                                <option value="Community Center">Community Center</option>
-                                                <option value="Shelter">Shelter</option>
+                                                <option value="">{t('donor.postFood.allBeneficiaries')}</option>
+                                                {Object.entries(BENEFICIARY_TYPE_KEY_MAP).map(([value, key]) => (
+                                                    <option key={value} value={value}>{t(`donor.beneficiaryTypes.${key}`)}</option>
+                                                ))}
                                             </select>
                                         </div>
 
                                         <div className="relative" ref={suggestionRef}>
                                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                                Specific Beneficiary Name (Optional)
+                                                {t('donor.postFood.specificBeneficiary')}
                                             </label>
                                             <input
                                                 type="text"
-                                                placeholder="Search by name (e.g., St. Mary's)"
+                                                placeholder={t('donor.postFood.searchBeneficiaryPlaceholder')}
                                                 className={`w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 outline-none transition-all placeholder:text-gray-300 ${!isValidBeneficiary ? 'ring-2 ring-red-500/50' : 'focus:ring-green-500/20'}`}
                                                 value={destinationName}
                                                 onChange={(e) => handleBeneficiarySearch(e.target.value)}
@@ -480,7 +482,7 @@ const PostFood = () => {
                                             />
                                             {!isValidBeneficiary && destinationName.trim() && (
                                                 <p className="text-[10px] text-red-500 mt-1 ml-1 font-bold animate-pulse">
-                                                    ⚠️ Not a registered beneficiary. They might not see this post.
+                                                    {t('donor.postFood.notRegisteredBeneficiary')}
                                                 </p>
                                             )}
                                             {beneficiarySearchLoading && <div className="absolute right-3 top-[38px] animate-spin h-4 w-4 border-2 border-green-500 border-t-transparent rounded-full"></div>}
@@ -494,7 +496,9 @@ const PostFood = () => {
                                                             className="w-full text-left px-4 py-3 hover:bg-green-50 transition-colors flex flex-col border-b border-gray-50 last:border-0"
                                                         >
                                                             <span className="text-sm font-bold text-gray-800">{s.name}</span>
-                                                            <span className="text-[10px] text-gray-400 uppercase font-black tracking-tight">{s.beneficiaryType || 'Beneficiary'}</span>
+                                                            <span className="text-[10px] text-gray-400 uppercase font-black tracking-tight">
+                                                                {s.beneficiaryType ? translateBeneficiaryType(s.beneficiaryType, t) : t('donor.postFood.beneficiary')}
+                                                            </span>
                                                         </button>
                                                     ))}
                                                 </div>
@@ -506,31 +510,27 @@ const PostFood = () => {
                                         <div className="space-y-4 pt-4 border-t border-gray-50 animate-in fade-in slide-in-from-top-2 duration-300">
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Frequency</label>
+                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{t('donor.postFood.frequency')}</label>
                                                     <select
                                                         className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer"
                                                         value={frequency}
                                                         onChange={(e) => setFrequency(e.target.value)}
                                                     >
-                                                        <option>Daily</option>
-                                                        <option>Weekly</option>
-                                                        <option>Monthly</option>
+                                                        {FREQUENCY_OPTIONS.map(({ value, key }) => (
+                                                            <option key={value} value={value}>{t(`donor.frequency.${key}`)}</option>
+                                                        ))}
                                                     </select>
                                                 </div>
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Preferred Day</label>
+                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{t('donor.postFood.preferredDay')}</label>
                                                     <select
                                                         className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all appearance-none cursor-pointer"
                                                         value={recurringDay}
                                                         onChange={(e) => setRecurringDay(e.target.value)}
                                                     >
-                                                        <option>Monday</option>
-                                                        <option>Tuesday</option>
-                                                        <option>Wednesday</option>
-                                                        <option>Thursday</option>
-                                                        <option>Friday</option>
-                                                        <option>Saturday</option>
-                                                        <option>Sunday</option>
+                                                        {DAY_OPTIONS.map(({ value, key }) => (
+                                                            <option key={value} value={value}>{t(`donor.days.${key}`)}</option>
+                                                        ))}
                                                     </select>
                                                 </div>
                                             </div>
@@ -540,7 +540,7 @@ const PostFood = () => {
                             </div>
                             <div className="flex justify-end pt-4">
                                 <button onClick={handlePost} disabled={loading} className="bg-[#43A047] text-white font-bold px-12 py-3.5 rounded-lg shadow-lg hover:bg-[#2E7D32] transition-all transform active:scale-95 disabled:opacity-70 text-base">
-                                    {loading ? 'Posting...' : 'Donate Food'}
+                                    {loading ? t('donor.postFood.posting') : t('donor.postFood.donateFood')}
                                 </button>
                             </div>
                         </div>

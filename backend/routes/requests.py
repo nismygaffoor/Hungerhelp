@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from models.request import FoodRequest
 from middleware.auth_middleware import token_required
 from bson.objectid import ObjectId
+from utils.location_helpers import normalize_location_data
 
 requests_bp = Blueprint('requests', __name__)
 
@@ -14,6 +15,9 @@ def create_request():
     
     data = request.json
     data['beneficiary_id'] = current_user['user_id']
+    data = normalize_location_data(data)
+    if not data.get('district') or not data.get('city'):
+        return jsonify({"error": "District and city are required"}), 400
     
     try:
         request_id = FoodRequest.create(data)
@@ -46,10 +50,47 @@ def get_my_requests():
 @token_required
 def delete_request(request_id):
     current_user = request.user_data
+    if current_user['role'] != 'Beneficiary':
+        return jsonify({"error": "Only beneficiaries can delete requests"}), 403
+
     try:
-        success = FoodRequest.delete(request_id, current_user['user_id'])
+        success, reason = FoodRequest.delete(request_id, current_user['user_id'])
         if success:
             return jsonify({"message": "Request deleted successfully"}), 200
-        return jsonify({"error": "Request not found or unauthorized"}), 404
+        if reason == "not_found" or reason == "invalid_id":
+            return jsonify({"error": "Request not found"}), 404
+        if reason == "unauthorized":
+            return jsonify({"error": "You can only delete your own requests"}), 403
+        if reason == "fulfilled":
+            return jsonify({
+                "error": "This request was already matched by a donor. Check My Claims for delivery progress."
+            }), 400
+        return jsonify({"error": "Failed to delete request"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@requests_bp.route('/<request_id>', methods=['PATCH'])
+@token_required
+def update_request(request_id):
+    current_user = request.user_data
+    if current_user['role'] != 'Beneficiary':
+        return jsonify({"error": "Only beneficiaries can update requests"}), 403
+
+    data = request.json or {}
+    data = normalize_location_data(data)
+
+    try:
+        success, reason = FoodRequest.update(request_id, current_user['user_id'], data)
+        if success:
+            return jsonify({"message": "Request updated successfully"}), 200
+        if reason == "not_found" or reason == "invalid_id":
+            return jsonify({"error": "Request not found"}), 404
+        if reason == "unauthorized":
+            return jsonify({"error": "You can only edit your own requests"}), 403
+        if reason == "fulfilled":
+            return jsonify({"error": "Matched requests cannot be edited. Check My Claims for delivery progress."}), 400
+        if reason == "deleted":
+            return jsonify({"error": "This request was removed"}), 400
+        return jsonify({"error": "Nothing to update"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500

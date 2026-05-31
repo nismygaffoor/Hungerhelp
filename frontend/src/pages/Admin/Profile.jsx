@@ -1,21 +1,37 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
-import { User, Mail, Shield, Bell, Activity, Users, Database, FileText, Settings, Lock } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { Shield } from 'lucide-react';
+import { useProfile } from '../../hooks/useProfile';
+import {
+    ProfileField,
+    ProfileLoading,
+    ProfileAvatar,
+    EditProfileButtons,
+    StatCard,
+} from '../../components/profile/ProfileShared';
 
 const Profile = () => {
-    const { user } = useAuth();
+    const { t } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(true);
-    const [profileData] = useState({
-        fullName: 'Admin Supervisor',
-        email: user?.email || 'admin@hungerhelp.org',
-        role: 'Super Administrator',
-        memberSince: 'January 2024',
-        lastLogin: '2 hours ago',
-        accessLevel: 'Level 10 (Full)'
-    });
+    const {
+        profile, stats, loading, saving, editing, form,
+        startEdit, cancelEdit, handleChange, saveProfile, memberSince, initials
+    } = useProfile();
+
+    if (loading) {
+        return (
+            <div className="flex min-h-screen bg-white">
+                <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+                <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
+                    <Navbar onMenuClick={() => setSidebarOpen(true)} />
+                    <ProfileLoading />
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
@@ -23,152 +39,65 @@ const Profile = () => {
             <main className={`flex-1 ml-0 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'} bg-white min-h-screen`}>
                 <Navbar onMenuClick={() => setSidebarOpen(true)} />
                 <div className="p-4 md:p-6 lg:p-8">
-                    {/* Header Section */}
+                    <header className="mb-6">
+                        <h2 className="text-3xl font-black text-gray-900 tracking-tight">{t('admin.profileTitle')}</h2>
+                        <p className="text-gray-500 text-sm font-medium mt-1">{t('admin.profileSubtitle')}</p>
+                    </header>
+
                     <div className="bg-white rounded-3xl p-6 mb-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 border-l-8 border-gray-900">
-                        <div className="relative group">
-                            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-100 shadow-lg">
-                                <img
-                                    src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop"
-                                    alt="Admin"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                />
-                            </div>
-                            <div className="absolute -bottom-2 -right-2 bg-gray-900 text-white p-2 rounded-xl shadow-md border-2 border-white">
-                                <Shield size={16} />
-                            </div>
-                        </div>
+                        <ProfileAvatar initials={initials} accentClass="bg-gray-900" borderClass="border-gray-200" />
                         <div className="text-center md:text-left flex-1">
-                            <div className="flex flex-col md:flex-row md:items-center gap-2 mb-1.5">
-                                <h1 className="text-2xl font-black text-gray-900 leading-tight">{profileData.fullName}</h1>
+                            <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
+                                <h1 className="text-2xl font-black text-gray-900">{profile?.name}</h1>
                                 <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest">
-                                    {profileData.role}
+                                    {t('admin.administrator')}
                                 </span>
                             </div>
-                            <p className="text-gray-400 font-bold text-[11px] uppercase tracking-wider">System Access: {profileData.accessLevel}</p>
-                            <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
-                                <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl border border-gray-100">
-                                    <Activity size={16} className="text-gray-900" />
-                                    <span className="text-xs font-bold text-gray-700">Last login {profileData.lastLogin}</span>
-                                </div>
-                            </div>
+                            <p className="text-gray-400 font-bold text-[11px] uppercase tracking-wider">
+                                {t('beneficiary.memberSince', { date: memberSince })}
+                            </p>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                        {/* Left Column: Admin Info & Security */}
                         <div className="lg:col-span-12 xl:col-span-7 space-y-8">
                             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                                <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight mb-8">Administrative Credentials</h3>
+                                <div className="flex justify-between items-center mb-8">
+                                    <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">{t('admin.adminCredentials')}</h3>
+                                    <EditProfileButtons
+                                        editing={editing}
+                                        saving={saving}
+                                        onEdit={startEdit}
+                                        onSave={saveProfile}
+                                        onCancel={cancelEdit}
+                                        accentClass="text-gray-900"
+                                    />
+                                </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">System Name</label>
-                                        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-transparent">
-                                            <User size={18} className="text-gray-400" />
-                                            <span className="text-sm font-bold text-gray-700">{profileData.fullName}</span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Admin Email</label>
-                                        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl">
-                                            <Mail size={18} className="text-gray-400" />
-                                            <span className="text-sm font-bold text-gray-700">{profileData.email}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="mt-8 pt-8 border-t border-gray-50 flex justify-end">
-                                    <button className="px-6 py-2 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-black transition-colors">
-                                        Update Credentials
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                                <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight mb-8">System Security</h3>
-                                <div className="space-y-6">
-                                    <div className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors group">
-                                        <div className="flex items-center gap-4">
-                                            <div className="bg-red-50 p-2.5 rounded-xl text-red-600">
-                                                <Lock size={20} />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-black text-gray-800 tracking-tight">Root Password</p>
-                                                <p className="text-xs text-gray-400 font-medium tracking-tight mt-0.5">Change master password and security keys</p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight size={18} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
-                                    </div>
-                                    <div className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl cursor-pointer transition-colors group">
-                                        <div className="flex items-center gap-4">
-                                            <div className="bg-blue-50 p-2.5 rounded-xl text-blue-600">
-                                                <Database size={20} />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-black text-gray-800 tracking-tight">Access Logs</p>
-                                                <p className="text-xs text-gray-400 font-medium tracking-tight mt-0.5">View your activity and system access history</p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight size={18} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
-                                    </div>
+                                    <ProfileField label={t('beneficiary.fullName')} value={profile?.name} field="name" icon="User" editing={editing} formValue={form.name} onChange={handleChange} />
+                                    <ProfileField label={t('admin.adminEmail')} value={profile?.email} icon="Mail" />
+                                    <ProfileField label={t('admin.contactNumber')} value={profile?.contact} field="contact" icon="Phone" editing={editing} formValue={form.contact} onChange={handleChange} />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Right Column: Platform Metrics */}
                         <div className="lg:col-span-12 xl:col-span-5 space-y-8">
-                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 text-center relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-10 opacity-5 rotate-12">
-                                    <Activity size={120} />
-                                </div>
-                                <h3 className="text-lg font-black text-gray-900 mb-8 uppercase tracking-tight">Admin Impact</h3>
-                                <div className="grid grid-cols-2 gap-6 relative z-10">
-                                    <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
-                                        <p className="text-2xl font-black text-gray-900 mb-1">1.2k</p>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight">Users Managed</p>
-                                    </div>
-                                    <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
-                                        <p className="text-2xl font-black text-gray-900 mb-1">856</p>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight">Actions Taken</p>
-                                    </div>
-                                    <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
-                                        <p className="text-2xl font-black text-gray-900 mb-1">45</p>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight">Pending Tasks</p>
-                                    </div>
-                                    <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
-                                        <p className="text-2xl font-black text-gray-900 mb-1">99.9%</p>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight">System Uptime</p>
-                                    </div>
-                                </div>
-                                <div className="mt-8 flex gap-4">
-                                    <button className="flex-1 py-4 bg-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-200 transition-all text-[10px] uppercase tracking-widest">
-                                        Audit Logs
-                                    </button>
-                                    <button className="flex-1 py-4 bg-gray-900 text-white font-black rounded-2xl hover:bg-black transition-all text-[10px] uppercase tracking-widest shadow-lg shadow-gray-200">
-                                        System Stats
-                                    </button>
+                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 text-center">
+                                <h3 className="text-lg font-black text-gray-900 mb-8 uppercase tracking-tight">{t('admin.platformOverview')}</h3>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <StatCard value={stats?.total_users} label={t('admin.totalUsers')} bgClass="bg-gray-50" textClass="text-gray-900" />
+                                    <StatCard value={stats?.food_posts} label={t('admin.foodPosts')} bgClass="bg-gray-50" textClass="text-gray-900" />
+                                    <StatCard value={stats?.deliveries} label={t('admin.deliveries')} bgClass="bg-gray-50" textClass="text-gray-900" />
+                                    <StatCard value={stats?.pending_verifications} label={t('admin.pendingVerifications')} bgClass="bg-amber-50" textClass="text-amber-700" />
                                 </div>
                             </div>
 
-                            {/* Privilege Summary */}
-                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                                <h3 className="text-base font-black text-gray-900 mb-6 uppercase tracking-tight">System Permissions</h3>
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-3 text-green-600">
-                                        <Shield size={16} />
-                                        <span className="text-xs font-bold">User Management (Read/Write)</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-green-600">
-                                        <Database size={16} />
-                                        <span className="text-xs font-bold">Database Queries (Super-user)</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-green-600">
-                                        <FileText size={16} />
-                                        <span className="text-xs font-bold">System Configuration</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-amber-600">
-                                        <Lock size={16} />
-                                        <span className="text-xs font-bold">Master Key Access (Restricted)</span>
-                                    </div>
-                                </div>
+                            <div className="bg-gray-900 rounded-3xl p-6 shadow-lg text-white">
+                                <Shield size={32} className="mb-3 opacity-80" />
+                                <h3 className="text-base font-black uppercase tracking-widest mb-2">{t('admin.adminAccess')}</h3>
+                                <p className="text-xs text-gray-300 leading-relaxed">
+                                    {t('admin.adminAccessDesc')}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -177,21 +106,5 @@ const Profile = () => {
         </div>
     );
 };
-
-const ChevronRight = ({ size, className }) => (
-    <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-    >
-        <path d="m9 18 6-6-6-6" />
-    </svg>
-);
 
 export default Profile;

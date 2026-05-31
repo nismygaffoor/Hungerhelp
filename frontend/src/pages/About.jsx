@@ -1,30 +1,34 @@
 import { Link } from 'react-router-dom';
-import { Leaf, Users, Heart, CheckCircle2, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Leaf, Users, Heart } from 'lucide-react';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const About = () => {
+    const { t } = useTranslation();
+
     return (
         <div className="font-sans bg-white text-gray-800 min-h-screen">
-            {/* Navbar (Reused from LandingPage) */}
             <nav className="flex justify-between items-center p-2 px-8 max-w-8xl mx-auto bg-white border-b border-gray-50">
                 <div className="text-2xl font-bold flex items-center gap-2">
                     <Leaf className="text-green-600" size={28} />
                     <span className="text-green-700 tracking-tight">Hunger<span className="text-gray-500 font-light">Help</span></span>
                 </div>
                 <div className="hidden md:flex gap-8 font-extrabold text-sm uppercase tracking-wider text-gray-900">
-                    <Link to="/" className="hover:text-green-600 transition-colors">Home</Link>
-                    <Link to="/about" className="text-green-600">About</Link>
-                    <a href="#" className="hover:text-green-600 transition-colors">How it Works</a>
-                    <a href="#" className="hover:text-green-600 transition-colors">Contact</a>
+                    <Link to="/" className="hover:text-green-600 transition-colors">{t('nav.home')}</Link>
+                    <Link to="/about" className="text-green-600">{t('nav.about')}</Link>
+                    <a href="#" className="hover:text-green-600 transition-colors">{t('nav.howItWorks')}</a>
+                    <a href="#" className="hover:text-green-600 transition-colors">{t('nav.contact')}</a>
                 </div>
-                <Link to="/login" className="bg-[#41834F] text-white px-8 py-2 rounded-lg font-bold shadow-md hover:bg-green-800 transition">
-                    Login
-                </Link>
+                <div className="flex items-center gap-3">
+                    <LanguageSwitcher />
+                    <Link to="/login" className="bg-[#41834F] text-white px-8 py-2 rounded-lg font-bold shadow-md hover:bg-green-800 transition">
+                        {t('nav.login')}
+                    </Link>
+                </div>
             </nav>
 
-            {/* Content Container */}
             <div className="max-w-7xl mx-auto px-6 py-16">
-                {/* Our Mission Header */}
-                <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-16 tracking-tight">Our Mission</h1>
+                <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-16 tracking-tight">{t('about.missionTitle')}</h1>
 
                 {/* Hero Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32">
@@ -37,16 +41,10 @@ const About = () => {
                     </div>
                     <div className="space-y-8">
                         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 leading-tight">
-                            Reducing Food Waste, <br />
-                            Fighting Hunger
+                            {t('about.missionHeading')}
                         </h2>
                         <div className="space-y-6 text-gray-500 text-lg leading-relaxed font-medium">
-                            <p>
-                                A latoryloy Food Wate doru ce m sethe lorshioe asyalunatis domem Hugnly devnge, onth lieze to tue concers with.
-                            </p>
-                            <p>
-                                The ligle in ds ou shewgbtie fix graine tor rematanat outd trotier. The sercors, and in comror 2024/OW riay pho to riodng for dtiynreed the kti etnsots. Coing aand lies tielnitsting Our domoruet, ans dersints lonlorue dang, Vhuy tusliees lte toetiurstlee.
-                            </p>
+                            <p>{t('about.missionText')}</p>
                         </div>
                     </div>
                 </div>
@@ -55,18 +53,18 @@ const About = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-32 px-4">
                     <ValueCard
                         icon={<Leaf size={32} className="text-green-600" />}
-                        title="Sustainability"
-                        text="Boeeo instat out vanat set m nos les avalands level sarvings."
+                        title={t('about.valueSustainability')}
+                        text={t('about.valueSustainabilityDesc')}
                     />
                     <ValueCard
                         icon={<Users size={32} className="text-green-600" />}
-                        title="Community"
-                        text="Thvuty rot ice istee of hg nilnitans as line lisary"
+                        title={t('about.valueCommunity')}
+                        text={t('about.valueCommunityDesc')}
                     />
                     <ValueCard
                         icon={<Heart size={32} className="text-green-600" />}
-                        title="Impact"
-                        text="Thvuty rot ice istee of hg nilnitans as line lisary"
+                        title={t('about.ctaTitle')}
+                        text={t('about.valueTrustDesc')}
                     />
                 </div>
 

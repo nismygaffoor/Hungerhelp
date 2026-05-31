@@ -1,41 +1,189 @@
-import { Bell, ChevronDown, Menu } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import {
+    Bell,
+    ChevronDown,
+    Menu,
+    User,
+    LayoutDashboard,
+    LogOut,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
- 
+import LanguageSwitcher from './LanguageSwitcher';
+
+const ROLE_CONFIG = {
+    Donor: {
+        labelKey: 'roles.donor',
+        badge: 'bg-green-50 text-green-700 border-green-100',
+        avatar: 'bg-green-600',
+        profile: '/donor/profile',
+        dashboard: '/donor/dashboard',
+    },
+    Beneficiary: {
+        labelKey: 'roles.beneficiary',
+        badge: 'bg-[#E8F5E9] text-[#1E5144] border-green-100',
+        avatar: 'bg-[#1E5144]',
+        profile: '/beneficiary/profile',
+        dashboard: '/beneficiary/dashboard',
+    },
+    Volunteer: {
+        labelKey: 'roles.volunteer',
+        badge: 'bg-[#E8F5E9] text-[#1E5144] border-green-100',
+        avatar: 'bg-[#1E5144]',
+        profile: '/volunteer/profile',
+        dashboard: '/volunteer/dashboard',
+    },
+    Admin: {
+        labelKey: 'roles.admin',
+        badge: 'bg-purple-50 text-purple-700 border-purple-100',
+        avatar: 'bg-purple-600',
+        profile: '/admin/profile',
+        dashboard: '/admin/dashboard',
+    },
+};
+
+const getInitials = (name, role) => {
+    if (name) {
+        return name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase();
+    }
+    return role?.[0]?.toUpperCase() || 'U';
+};
+
 const Navbar = ({ onMenuClick }) => {
-    const { user } = useAuth();
- 
+    const { t } = useTranslation();
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+    const [profileOpen, setProfileOpen] = useState(false);
+    const [notifOpen, setNotifOpen] = useState(false);
+    const profileRef = useRef(null);
+    const notifRef = useRef(null);
+
+    const roleConfig = ROLE_CONFIG[user?.role] || ROLE_CONFIG.Donor;
+    const displayName = user?.name || t('nav.yourProfile');
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (profileRef.current && !profileRef.current.contains(event.target)) setProfileOpen(false);
+            if (notifRef.current && !notifRef.current.contains(event.target)) setNotifOpen(false);
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const closeAll = () => {
+        setProfileOpen(false);
+        setNotifOpen(false);
+    };
+
+    const handleLogout = () => {
+        closeAll();
+        logout();
+        navigate(user?.role === 'Admin' ? '/admin/login' : '/login');
+    };
+
     return (
-        <header className="flex justify-between items-center bg-white px-4 md:px-6 py-4">
-            {/* Mobile Menu Button */}
-            <button 
-                onClick={onMenuClick}
-                className="md:hidden p-2 text-gray-500 hover:bg-gray-50 rounded-xl transition-all"
-            >
-                <Menu size={22} />
-            </button>
-            <div className="flex items-center gap-5">
-                {/* Notification Badge */}
-                <div className="relative cursor-pointer group">
-                    <div className="bg-[#EFF6FF] p-1.5 rounded-xl">
-                        <Bell className="text-[#3B82F6] group-hover:text-blue-600 transition-colors" size={18} />
+        <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+            <div className="flex items-center justify-end h-16 px-4 md:px-6">
+                <button
+                    onClick={onMenuClick}
+                    className="md:hidden mr-auto p-2 text-gray-500 hover:bg-gray-50 rounded-xl transition-all"
+                    aria-label={t('common.openMenu')}
+                >
+                    <Menu size={22} />
+                </button>
+
+                <div className="flex items-center gap-2 md:gap-3">
+                    <LanguageSwitcher />
+
+                    <div className="relative" ref={notifRef}>
+                        <button
+                            onClick={() => {
+                                setNotifOpen(!notifOpen);
+                                setProfileOpen(false);
+                            }}
+                            className="p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all"
+                            aria-label={t('nav.notifications')}
+                        >
+                            <Bell size={18} />
+                        </button>
+
+                        {notifOpen && (
+                            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                                <div className="px-4 py-3 border-b border-gray-50">
+                                    <h3 className="text-sm font-bold text-gray-900">{t('nav.notifications')}</h3>
+                                </div>
+                                <div className="px-4 py-8 text-center">
+                                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <Bell size={20} className="text-gray-300" />
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-500">{t('nav.noNotifications')}</p>
+                                    <p className="text-xs text-gray-400 mt-1">{t('nav.notificationsHint')}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                    <span className="absolute -top-1 -right-1 bg-[#EF4444] text-white text-[9px] font-bold rounded-xl w-3.5 h-3.5 flex items-center justify-center border-2 border-white">6</span>
-                </div>
 
-                {/* Language Selector */}
-                <div className="flex items-center gap-2 cursor-pointer group px-3 py-1.5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all">
-                    <span className="text-[11px] font-bold text-gray-600">English</span>
-                    <ChevronDown size={12} className="text-gray-400" />
-                </div>
+                    <div className="relative" ref={profileRef}>
+                        <button
+                            onClick={() => {
+                                setProfileOpen(!profileOpen);
+                                setNotifOpen(false);
+                            }}
+                            className="flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-xl hover:bg-gray-50 transition-all"
+                        >
+                            <div className={`w-9 h-9 rounded-xl ${roleConfig.avatar} text-white flex items-center justify-center text-xs font-black shadow-sm shrink-0`}>
+                                {getInitials(user?.name, user?.role)}
+                            </div>
+                            <div className="text-left hidden sm:block">
+                                <p className="text-xs font-bold text-gray-900 leading-tight max-w-[140px] truncate">
+                                    {displayName}
+                                </p>
+                                <span className={`inline-flex mt-0.5 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-full border ${roleConfig.badge}`}>
+                                    {t(roleConfig.labelKey)}
+                                </span>
+                            </div>
+                            <ChevronDown size={14} className={`text-gray-400 hidden sm:block transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
+                        </button>
 
-                {/* Profile Section */}
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gray-200 border border-gray-100 overflow-hidden shadow-sm hover:ring-2 hover:ring-[#1E5144] transition-all cursor-pointer">
-                        <img
-                            src={`https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop`}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                        />
+                        {profileOpen && (
+                            <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                                <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
+                                    <p className="text-sm font-bold text-gray-900 truncate">{displayName}</p>
+                                    <p className="text-xs text-gray-500 truncate mt-0.5">{user?.email}</p>
+                                    <span className={`inline-flex mt-2 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-full border ${roleConfig.badge}`}>
+                                        {t(roleConfig.labelKey)}
+                                    </span>
+                                </div>
+
+                                <div className="py-1">
+                                    <button
+                                        onClick={() => { closeAll(); navigate(roleConfig.dashboard); }}
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <LayoutDashboard size={16} className="text-gray-400" />
+                                        {t('nav.dashboard')}
+                                    </button>
+                                    <button
+                                        onClick={() => { closeAll(); navigate(roleConfig.profile); }}
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <User size={16} className="text-gray-400" />
+                                        {t('nav.yourProfile')}
+                                    </button>
+                                </div>
+
+                                <div className="border-t border-gray-50 py-1">
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
+                                    >
+                                        <LogOut size={16} />
+                                        {t('common.logout')}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

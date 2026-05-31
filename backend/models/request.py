@@ -17,6 +17,9 @@ class FoodRequest:
             "quantity": data.get('quantity', ""), # Fallback/Legacy
             "urgency": data.get('urgency', 'Normal'), # High, Medium, Normal
             "location": data.get('location', ""),
+            "district": data.get('district', ''),
+            "home_address": data.get('home_address', data.get('home_no', '')),
+            "city": data.get('city', data.get('road', '')),
             "description": data.get('description', ""),
             "status": "Active", # Active, Fulfilled, Deleted
             "created_at": datetime.utcnow()
@@ -44,7 +47,13 @@ class FoodRequest:
 
     @staticmethod
     def get_by_beneficiary(user_id):
-        query = {"beneficiary_id": ObjectId(user_id)}
+        query = {
+            "$or": [
+                {"beneficiary_id": ObjectId(user_id)},
+                {"beneficiary_id": user_id}
+            ],
+            "status": {"$ne": "Deleted"}
+        }
         cursor = FoodRequest.collection.find(query).sort("created_at", -1)
         requests = []
         for doc in cursor:
@@ -55,8 +64,61 @@ class FoodRequest:
 
     @staticmethod
     def delete(request_id, user_id):
-        result = FoodRequest.collection.update_one(
-            {"_id": ObjectId(request_id), "beneficiary_id": ObjectId(user_id)},
+        try:
+            oid = ObjectId(request_id)
+        except Exception:
+            return False, "invalid_id"
+
+        req = FoodRequest.collection.find_one({"_id": oid})
+        if not req:
+            return False, "not_found"
+
+        if str(req.get("beneficiary_id")) != str(user_id):
+            return False, "unauthorized"
+
+        if req.get("status") == "Deleted":
+            return True, "already_deleted"
+
+        if req.get("status") == "Fulfilled":
+            return False, "fulfilled"
+
+        FoodRequest.collection.update_one(
+            {"_id": oid},
             {"$set": {"status": "Deleted"}}
         )
-        return result.modified_count > 0
+        return True, "success"
+
+    @staticmethod
+    def update(request_id, user_id, data):
+        try:
+            oid = ObjectId(request_id)
+        except Exception:
+            return False, "invalid_id"
+
+        req = FoodRequest.collection.find_one({"_id": oid})
+        if not req:
+            return False, "not_found"
+
+        if str(req.get("beneficiary_id")) != str(user_id):
+            return False, "unauthorized"
+
+        if req.get("status") == "Fulfilled":
+            return False, "fulfilled"
+
+        if req.get("status") == "Deleted":
+            return False, "deleted"
+
+        update_fields = {}
+        allowed = [
+            'items', 'food_type', 'quantity', 'urgency', 'location',
+            'district', 'home_address', 'city', 'description',
+        ]
+        for field in allowed:
+            if field in data:
+                update_fields[field] = data[field]
+
+        if not update_fields:
+            return False, "no_fields"
+
+        FoodRequest.collection.update_one({"_id": oid}, {"$set": update_fields})
+        return True, "success"

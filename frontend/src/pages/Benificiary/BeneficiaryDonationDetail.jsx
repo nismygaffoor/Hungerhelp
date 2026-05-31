@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { translateStatus, CATEGORY_KEY_MAP, URGENCY_KEY_MAP } from '../../i18n/donorVolunteerI18n';
 import api from '../../api/axios';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
+import { getPostAddressDisplay } from '../../constants/locations';
 import {
     ArrowLeft,
     MapPin,
@@ -16,6 +19,15 @@ import {
 } from 'lucide-react';
 
 const BeneficiaryDonationDetail = () => {
+    const { t } = useTranslation();
+    const translateCategory = (c) => {
+        const k = CATEGORY_KEY_MAP[c];
+        return k ? t(`beneficiary.categories.${k}`) : c;
+    };
+    const translateUrgency = (u) => {
+        const k = URGENCY_KEY_MAP[u];
+        return k ? t(`beneficiary.urgency.${k}`) : u;
+    };
     const { id } = useParams();
     const navigate = useNavigate();
     const routerLocation = useLocation();
@@ -26,9 +38,10 @@ const BeneficiaryDonationDetail = () => {
     const [isCollapsed, setIsCollapsed] = useState(true);
     const backendUrl = 'http://localhost:5000/uploads/';
 
-    // Determine back link based on state or default to /beneficiary/claim
     const backPath = routerLocation.state?.from || '/beneficiary/claim';
-    const backLabel = backPath === '/beneficiary/history' ? 'Back to My Claims' : 'Back to Available Food';
+    const backLabel = backPath === '/beneficiary/history'
+        ? t('beneficiary.backToMyClaims')
+        : t('beneficiary.backToAvailableFood');
 
     useEffect(() => {
         fetchDonationDetail();
@@ -41,7 +54,7 @@ const BeneficiaryDonationDetail = () => {
             setDonation(res.data);
         } catch (err) {
             console.error('Failed to fetch donation details:', err);
-            const errorMsg = err.response?.data?.message || 'Failed to load donation details';
+            const errorMsg = err.response?.data?.message || t('beneficiary.loadDonationFailed');
             const debugInfo = err.response?.data?.debug;
 
             if (debugInfo) {
@@ -60,7 +73,7 @@ const BeneficiaryDonationDetail = () => {
     };
 
     const handleClaim = async () => {
-        if (!confirm("Are you sure you want to claim this food?")) return;
+        if (!confirm(t('beneficiary.confirmClaim'))) return;
 
         try {
             const res = await api.post(`/food/${id}/claim`);
@@ -68,7 +81,7 @@ const BeneficiaryDonationDetail = () => {
             navigate('/beneficiary/history');
         } catch (err) {
             console.error("Claim error:", err);
-            alert(err.response?.data?.message || "Failed to claim food");
+            alert(err.response?.data?.message || t('beneficiary.claimFailed'));
         }
     };
 
@@ -88,11 +101,13 @@ const BeneficiaryDonationDetail = () => {
 
     if (!donation) return null;
 
-    const foodName = donation.food_type?.split(' - ')[0] || 'Food Donation';
+    const foodName = donation.food_type?.split(' - ')[0] || t('beneficiary.foodDonation');
     const foodDesc = donation.food_type?.split(' - ')[1] || donation.description || '';
-    const [location, pickupTimes] = (donation.location || '').split(' | ');
+    const addressDisplay = getPostAddressDisplay(donation);
+    const pickupTimes = (donation.location || '').includes(' | ')
+        ? (donation.location || '').split(' | ')[1]
+        : '';
 
-    // Collect all images from items
     const allItemImages = (donation.items || []).reduce((acc, item) => {
         if (item.images && item.images.length > 0) {
             return [...acc, ...item.images];
@@ -103,10 +118,8 @@ const BeneficiaryDonationDetail = () => {
     const images = (donation.images && donation.images.length > 0) ? donation.images : allItemImages;
     const hasImages = images.length > 0;
 
-    // Check if the donation has expired
     const isExpired = donation.expiry_time && new Date(donation.expiry_time) < new Date();
     
-    // Status color mapping
     const getStatusStyles = () => {
         if (isExpired && donation.status === 'Available') return 'bg-gray-100 text-gray-500';
         if (donation.status === 'Available') return 'bg-green-100 text-green-700';
@@ -115,7 +128,9 @@ const BeneficiaryDonationDetail = () => {
         return 'bg-gray-100 text-gray-700';
     };
 
-    const displayStatus = (isExpired && donation.status === 'Available') ? 'Expired' : donation.status;
+    const displayStatus = (isExpired && donation.status === 'Available')
+        ? t('status.expired')
+        : translateStatus(donation.status, t);
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
@@ -125,7 +140,6 @@ const BeneficiaryDonationDetail = () => {
                 <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
                 <div className="p-4 md:p-6 max-w-7xl mx-auto">
-                    {/* Back Button */}
                     <button
                         onClick={() => navigate(backPath)}
                         className="flex items-center gap-2 text-gray-500 hover:text-green-600 font-bold text-xs mb-8 transition-all group"
@@ -135,9 +149,7 @@ const BeneficiaryDonationDetail = () => {
                     </button>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        {/* Left Column - Images & Main Info */}
                         <div className="lg:col-span-8 space-y-8">
-                            {/* Image Gallery */}
                             {hasImages && (
                                 <div className="bg-white rounded-[2rem] p-4 shadow-sm border border-gray-100">
                                     <div className="aspect-[21/9] bg-gray-50 rounded-[1.5rem] overflow-hidden mb-4 border border-gray-50">
@@ -170,7 +182,6 @@ const BeneficiaryDonationDetail = () => {
                                 </div>
                             )}
 
-                            {/* Main Details Card */}
                             <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
                                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
                                     <div className="flex-1">
@@ -178,19 +189,19 @@ const BeneficiaryDonationDetail = () => {
                                             {donation.is_urgent && (
                                                 <span className="px-3 py-1 bg-red-50 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-full flex items-center gap-1 border border-red-100">
                                                     <AlertCircle size={12} />
-                                                    Urgent
+                                                    {t('beneficiary.urgent')}
                                                 </span>
                                             )}
                                             {donation.is_recurring && (
                                                 <span className="px-3 py-1 bg-blue-50 text-blue-500 text-[10px] font-black uppercase tracking-widest rounded-full flex items-center gap-1 border border-blue-100">
                                                     <Repeat size={12} />
-                                                    Recurring
+                                                    {t('beneficiary.recurring')}
                                                 </span>
                                             )}
                                         </div>
                                         <h1 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">{foodName}</h1>
                                         <p className="text-green-600 text-xs font-black uppercase tracking-widest mb-6">
-                                            Donated by {donation.donor_name || "Community Partner"}
+                                            {t('beneficiary.donatedBy')} {donation.donor_name || t('beneficiary.communityPartner')}
                                         </p>
                                         {foodDesc && (
                                             <p className="text-gray-500 text-base font-medium leading-relaxed max-w-2xl italic border-l-4 border-green-50 pl-6 py-2">
@@ -200,9 +211,8 @@ const BeneficiaryDonationDetail = () => {
                                     </div>
                                 </div>
 
-                                {/* Items Breakdown */}
                                 <div className="bg-gray-50/50 rounded-3xl p-6 mb-8 border border-gray-100">
-                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-5">Package Contents</h3>
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-5">{t('beneficiary.packageContents')}</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {(donation.items || [{ category: foodName, quantity: donation.quantity }]).map((item, idx) => (
                                             <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-50 shadow-sm">
@@ -212,9 +222,9 @@ const BeneficiaryDonationDetail = () => {
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-[8px] font-black text-green-600 uppercase tracking-tighter bg-green-50 px-1.5 py-0.5 rounded">
-                                                            {item.category}
+                                                            {translateCategory(item.category)}
                                                         </span>
-                                                        <p className="text-sm font-bold text-gray-900">{item.name || 'Item'}</p>
+                                                        <p className="text-sm font-bold text-gray-900">{item.name || t('beneficiary.item')}</p>
                                                         <p className="text-[11px] font-bold text-gray-400">({item.quantity})</p>
                                                     </div>
                                                 </div>
@@ -224,14 +234,14 @@ const BeneficiaryDonationDetail = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 px-2">
-                                    {location && (
+                                    {addressDisplay && addressDisplay !== 'Address not set' && (
                                         <div className="flex items-start gap-4">
                                             <div className="p-2.5 bg-blue-50 rounded-xl border border-blue-100">
                                                 <MapPin size={20} className="text-blue-500" />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pickup Location</p>
-                                                <p className="text-sm font-bold text-gray-800">{location}</p>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('beneficiary.pickupLocation')}</p>
+                                                <p className="text-sm font-bold text-gray-800">{addressDisplay}</p>
                                             </div>
                                         </div>
                                     )}
@@ -242,7 +252,7 @@ const BeneficiaryDonationDetail = () => {
                                                 <Clock size={20} className="text-purple-500" />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Available Hours</p>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('beneficiary.availableHours')}</p>
                                                 <p className="text-sm font-bold text-gray-800">{pickupTimes}</p>
                                             </div>
                                         </div>
@@ -254,7 +264,7 @@ const BeneficiaryDonationDetail = () => {
                                                 <Calendar size={20} className="text-orange-500" />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Best Before</p>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('beneficiary.bestBefore')}</p>
                                                 <p className={`text-sm font-bold ${isExpired ? 'text-red-500' : 'text-gray-800'}`}>
                                                     {new Date(donation.expiry_time).toLocaleString('en-US', {
                                                         month: 'long',
@@ -262,7 +272,7 @@ const BeneficiaryDonationDetail = () => {
                                                         hour: '2-digit',
                                                         minute: '2-digit'
                                                     })}
-                                                    {isExpired && " (EXPIRED)"}
+                                                    {isExpired && t('beneficiary.expiredSuffix')}
                                                 </p>
                                             </div>
                                         </div>
@@ -271,47 +281,43 @@ const BeneficiaryDonationDetail = () => {
                             </div>
                         </div>
 
-                        {/* Right Column - Status & Actions */}
                         <div className="lg:col-span-4 space-y-8">
-                            {/* Status Card */}
                             <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 text-center">
-                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Availability</h3>
+                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">{t('beneficiary.availability')}</h3>
                                 <div className={`inline-block px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest shadow-sm ${getStatusStyles()}`}>
                                     {displayStatus}
                                 </div>
                                 {isExpired && donation.status === 'Available' && (
                                     <p className="mt-4 text-[10px] font-bold text-red-400 uppercase tracking-widest leading-relaxed px-4">
-                                        This donation has reached its expiry time.
+                                        {t('beneficiary.expiryReached')}
                                     </p>
                                 )}
                             </div>
 
-                            {/* Action Button */}
                             {donation.status === 'Available' && !isExpired && (
                                 <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 text-center">
-                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Reserve Now</h3>
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">{t('beneficiary.reserveNow')}</h3>
                                     <button
                                         onClick={handleClaim}
                                         className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-green-600 hover:bg-green-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-green-600/20 active:scale-95"
                                     >
                                         <Navigation2 size={18} className="rotate-90" />
-                                        CLAIM THIS FOOD
+                                        {t('beneficiary.claimThisFood')}
                                     </button>
                                     <p className="mt-4 text-[10px] font-bold text-gray-300 uppercase tracking-widest">
-                                        Secure this for pickup
+                                        {t('beneficiary.secureForPickup')}
                                     </p>
                                 </div>
                             )}
 
-                            {/* Info Card */}
                             <div className="bg-green-900 rounded-[2rem] p-8 shadow-xl text-white">
-                                <h3 className="text-[10px] font-black text-green-300 uppercase tracking-widest mb-4">Donation Mission</h3>
+                                <h3 className="text-[10px] font-black text-green-300 uppercase tracking-widest mb-4">{t('beneficiary.donationMission')}</h3>
                                 <p className="text-sm font-medium leading-relaxed mb-6 text-green-50/80">
-                                    Your claim helps reduce local food waste. Please ensure you can collect this item within the available hours.
+                                    {t('beneficiary.claimMissionText')}
                                 </p>
                                 <div className="flex items-center gap-2 text-green-300 font-black text-[10px] uppercase tracking-widest">
                                     <Utensils size={14} />
-                                    Zero Hunger Project
+                                    {t('beneficiary.zeroHungerProject')}
                                 </div>
                             </div>
                         </div>

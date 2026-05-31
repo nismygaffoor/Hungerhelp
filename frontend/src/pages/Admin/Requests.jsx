@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
 
 const Requests = () => {
+    const { t } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -13,12 +15,12 @@ const Requests = () => {
                 <Navbar onMenuClick={() => setSidebarOpen(true)} />
                 <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto">
                     <header className="mb-6 text-left">
-                        <h2 className="text-xl font-bold text-gray-900 leading-tight">Food Request Management</h2>
-                        <p className="text-gray-500 text-sm mt-1">Review and coordinate food requests from beneficiaries in need.</p>
+                        <h2 className="text-xl font-bold text-gray-900 leading-tight">{t('admin.requestsTitle')}</h2>
+                        <p className="text-gray-500 text-sm mt-1">{t('admin.requestsSubtitle')}</p>
                     </header>
                     <div className="bg-white border border-gray-100 rounded-3xl p-12 text-center shadow-sm">
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Community Requests</h3>
-                        <p className="text-gray-500">Review and coordinate food requests from beneficiaries in need.</p>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2">{t('admin.communityRequests')}</h3>
+                        <p className="text-gray-500">{t('admin.requestsSubtitle')}</p>
                     </div>
                 </div>
             </main>

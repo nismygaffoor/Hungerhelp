@@ -1,21 +1,22 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { X, LayoutDashboard, Utensils, List, Users, MessageSquare, User, LogOut, Leaf, Settings, Timer, FileText, Menu } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed }) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
     const { logout } = useAuth();
 
     const menuItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: <Timer size={22} />, path: '/donor/dashboard' },
-        { id: 'profile', label: 'Your Profile', icon: <User size={22} />, path: '/donor/profile' },
-        { id: 'requested food', label: 'Requested food', icon: <FileText size={22} />, path: '/donor/requestedfood' },
-        { id: 'post', label: 'Post Food', icon: <MessageSquare size={22} />, path: '/donor/post' },
-        { id: 'recurring', label: 'Recurring Donations', icon: <Users size={22} />, path: '/donor/recurring' },
-        { id: 'history', label: 'My Donations', icon: <List size={22} />, path: '/donor/history' },
-        { id: 'feedback', label: 'Feedback', icon: <FileText size={22} />, path: '/donor/feedback' },
-          
+        { id: 'dashboard', labelKey: 'sidebar.dashboard', icon: <Timer size={22} />, path: '/donor/dashboard' },
+        { id: 'profile', labelKey: 'sidebar.profile', icon: <User size={22} />, path: '/donor/profile' },
+        { id: 'requested food', labelKey: 'sidebar.donor.requestedFood', icon: <FileText size={22} />, path: '/donor/requestedfood' },
+        { id: 'post', labelKey: 'sidebar.donor.postFood', icon: <MessageSquare size={22} />, path: '/donor/post' },
+        { id: 'recurring', labelKey: 'sidebar.donor.recurring', icon: <Users size={22} />, path: '/donor/recurring' },
+        { id: 'history', labelKey: 'sidebar.donor.myDonations', icon: <List size={22} />, path: '/donor/history' },
+        { id: 'feedback', labelKey: 'sidebar.donor.feedback', icon: <FileText size={22} />, path: '/donor/feedback' },
     ];
 
     const handleLogout = () => {
@@ -61,7 +62,7 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed }) => {
                         <button
                             key={item.id}
                             onClick={() => navigate(item.path)}
-                            title={isCollapsed ? item.label : ''}
+                            title={isCollapsed ? t(item.labelKey) : ''}
                             className={`w-full flex items-center px-4 py-2.5 rounded-xl transition-all group
                         ${isActive
                                     ? 'bg-[#1E5144] text-white shadow-lg'
@@ -71,7 +72,7 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed }) => {
                             <div className={`flex items-center transition-all ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-[#1E5144]'}`}>
                                 {item.icon}
                             </div>
-                            {!isCollapsed && <span className="text-sm font-semibold whitespace-nowrap">{item.label}</span>}
+                            {!isCollapsed && <span className="text-sm font-semibold whitespace-nowrap">{t(item.labelKey)}</span>}
                         </button>
                     );
                 })}
@@ -84,7 +85,7 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed }) => {
                     <div className="text-gray-400 group-hover:text-[#1E5144]">
                         <Settings size={22} />
                     </div>
-                    {!isCollapsed && "Settings"}
+                    {!isCollapsed && t('common.settings')}
                 </button>
                 <button
                     onClick={handleLogout}
@@ -93,7 +94,7 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed }) => {
                     <div className="text-gray-400 group-hover:text-red-500">
                         <LogOut size={22} />
                     </div>
-                    {!isCollapsed && <span className="font-bold">Logout</span>}
+                    {!isCollapsed && <span className="font-bold">{t('common.logout')}</span>}
                 </button>
             </div>
             </aside>
