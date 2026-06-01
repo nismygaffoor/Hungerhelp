@@ -21,6 +21,13 @@ def create_request():
     
     try:
         request_id = FoodRequest.create(data)
+        from utils.notifications import notify_new_food_request
+        food_label = data.get('food_type') or 'Food request'
+        if data.get('items') and isinstance(data['items'], list) and len(data['items']) > 0:
+            first_item = data['items'][0]
+            if isinstance(first_item, dict) and first_item.get('name'):
+                food_label = first_item.get('name')
+        notify_new_food_request(food_label, data.get('district'))
         return jsonify({"message": "Food request created successfully", "request_id": request_id}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500

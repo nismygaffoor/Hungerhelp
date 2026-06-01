@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { Upload, FileText, Trash2, ExternalLink, Loader2, ShieldCheck, ShieldX, AlertCircle } from 'lucide-react';
+import { useDialog } from '../../context/DialogContext';
 
 const DOC_TYPES = ['National ID', 'Proof of Address', 'Organization Letter', 'Other'];
 const DOC_TYPE_KEYS = {
@@ -28,6 +29,7 @@ const STATUS_CLASS_NAMES = {
 
 const VerificationUpload = ({ profile, onUpdated, accentClass = 'bg-[#1E5144] hover:bg-[#163d33]' }) => {
     const { t } = useTranslation();
+    const { toast, confirmDialog } = useDialog();
     const fileRef = useRef(null);
     const [docType, setDocType] = useState('National ID');
     const [uploading, setUploading] = useState(false);
@@ -47,7 +49,7 @@ const VerificationUpload = ({ profile, onUpdated, accentClass = 'bg-[#1E5144] ho
     const handleUpload = async () => {
         const file = fileRef.current?.files?.[0];
         if (!file) {
-            alert(t('components.verificationUpload.selectDocumentAlert'));
+            toast.warning(t('components.verificationUpload.selectDocumentAlert'));
             return;
         }
 
@@ -63,24 +65,25 @@ const VerificationUpload = ({ profile, onUpdated, accentClass = 'bg-[#1E5144] ho
             const msg = isRejected || rejectionReason
                 ? t('components.verificationUpload.reverifySuccess')
                 : t('components.verificationUpload.uploadSuccess');
-            alert(msg);
+            toast.success(msg);
             fileRef.current.value = '';
             onUpdated?.();
         } catch (err) {
-            alert(err.response?.data?.error || t('components.verificationUpload.uploadFailed'));
+            toast.error(err.response?.data?.error || t('components.verificationUpload.uploadFailed'));
         } finally {
             setUploading(false);
         }
     };
 
     const handleDelete = async (docId) => {
-        if (!confirm(t('components.verificationUpload.removeConfirm'))) return;
+        const ok = await confirmDialog(t('components.verificationUpload.removeConfirm'), { variant: 'danger' });
+        if (!ok) return;
         setDeletingId(docId);
         try {
             await api.delete(`/users/verification-documents/${docId}`);
             onUpdated?.();
         } catch (err) {
-            alert(err.response?.data?.error || t('components.verificationUpload.removeFailed'));
+            toast.error(err.response?.data?.error || t('components.verificationUpload.removeFailed'));
         } finally {
             setDeletingId(null);
         }

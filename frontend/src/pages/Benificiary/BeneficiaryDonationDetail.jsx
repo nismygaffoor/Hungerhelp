@@ -17,9 +17,13 @@ import {
     Utensils,
     Navigation2
 } from 'lucide-react';
+import { useDialog } from '../../context/DialogContext';
+import DeliveryTrackingCard from '../../components/delivery/DeliveryTrackingCard';
+import EscalationActions from '../../components/delivery/EscalationActions';
 
 const BeneficiaryDonationDetail = () => {
     const { t } = useTranslation();
+    const { toast, confirmDialog } = useDialog();
     const translateCategory = (c) => {
         const k = CATEGORY_KEY_MAP[c];
         return k ? t(`beneficiary.categories.${k}`) : c;
@@ -59,10 +63,8 @@ const BeneficiaryDonationDetail = () => {
 
             if (debugInfo) {
                 console.log('Backend Debug Info:', debugInfo);
-                alert(`${errorMsg}\n\nDebug: ${JSON.stringify(debugInfo)}`);
-            } else {
-                alert(errorMsg);
             }
+            toast.error(errorMsg);
 
             if (err.response?.status !== 403) {
                 navigate(backPath);
@@ -73,15 +75,16 @@ const BeneficiaryDonationDetail = () => {
     };
 
     const handleClaim = async () => {
-        if (!confirm(t('beneficiary.confirmClaim'))) return;
+        const ok = await confirmDialog(t('beneficiary.confirmClaim'), { variant: 'danger' });
+        if (!ok) return;
 
         try {
             const res = await api.post(`/food/${id}/claim`);
-            alert(res.data.message);
+            toast.success(res.data.message);
             navigate('/beneficiary/history');
         } catch (err) {
             console.error("Claim error:", err);
-            alert(err.response?.data?.message || t('beneficiary.claimFailed'));
+            toast.error(err.response?.data?.message || t('beneficiary.claimFailed'));
         }
     };
 
@@ -131,6 +134,8 @@ const BeneficiaryDonationDetail = () => {
     const displayStatus = (isExpired && donation.status === 'Available')
         ? t('status.expired')
         : translateStatus(donation.status, t);
+
+    const showDeliveryTracking = donation.delivery && donation.status !== 'Available';
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
@@ -293,6 +298,19 @@ const BeneficiaryDonationDetail = () => {
                                     </p>
                                 )}
                             </div>
+
+                            {showDeliveryTracking && (
+                                <DeliveryTrackingCard delivery={donation.delivery} showDropoff />
+                            )}
+
+                            {showDeliveryTracking && (
+                                <EscalationActions
+                                    role="Beneficiary"
+                                    postId={id}
+                                    delivery={donation.delivery}
+                                    onUpdated={fetchDonationDetail}
+                                />
+                            )}
 
                             {donation.status === 'Available' && !isExpired && (
                                 <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 text-center">

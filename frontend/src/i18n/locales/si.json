@@ -21,7 +21,11 @@
     "logout": "ඉවත් වන්න",
     "downloadCsvReport": "CSV වාර්තාව බාගත කරන්න",
     "accessDenied": "ප්‍රවේශය ප්‍රතික්ෂේප විය: මෙම පිටුව බැලීමට ඔබට අවසර නැත.",
-    "openMenu": "මෙනුව විවෘත කරන්න"
+    "openMenu": "මෙනුව විවෘත කරන්න",
+    "confirmTitle": "ඔබට විශ්වාසද?",
+    "yes": "ඔව්",
+    "no": "නැත",
+    "ok": "හරි"
   },
   "roles": {
     "donor": "දායකයා",
@@ -41,6 +45,119 @@
     "dashboard": "උපකරණ පුවරුව",
     "yourProfile": "ඔබගේ 프로필",
     "language": "භාෂාව"
+  },
+  "notifications": {
+    "markAllRead": "සියල්ල කියවූ ලෙස සලකුණු කරන්න",
+    "justNow": "දැන්",
+    "minsAgo": "මිනි {{count}}කට පෙර",
+    "hoursAgo": "පැ {{count}}කට පෙර",
+    "daysAgo": "දි {{count}}කට පෙර",
+    "types": {
+      "food_claimed": {
+        "title": "ආහාරය claim කරන ලදී",
+        "message": "{{name}} ඔබේ {{food}} donation claim කළා."
+      },
+      "delivery_available": {
+        "title": "නව delivery task",
+        "message": "{{food}} සඳහා volunteer කෙනෙක් අවශ්‍යයි. Tasks වෙතින් accept කරන්න."
+      },
+      "volunteer_assigned": {
+        "title": "Volunteer යොදවන ලදී",
+        "message": "{{volunteer}} {{food}} delivery accept කළා."
+      },
+      "food_picked_up": {
+        "title": "ආහාරය එකල් කරන ලදී",
+        "message": "{{volunteer}} {{food}} එකල් කර මංදෙමට යමින්."
+      },
+      "food_delivered": {
+        "title": "Delivery සම්පූර්ණයි",
+        "message": "{{food}} සාර්ථකව deliver කරන ලදී."
+      },
+      "request_fulfilled": {
+        "title": "ඉල්ලීම match විය",
+        "message": "{{donor}} ඔබේ ඉල්ලීම {{food}} සමඟ match කළා."
+      },
+      "new_food_request": {
+        "title": "නව ආහාර ඉල්ලීම",
+        "message": "{{district}} හි කෙනෙක් {{food}} අවශ්‍යයි."
+      },
+      "account_verified": {
+        "title": "ගිණුම verified",
+        "message": "ඔබේ ගිණුම අනුමත කරන ලදී. දැන් full access ඇත."
+      },
+      "account_rejected": {
+        "title": "ගිණුම rejected",
+        "message": "Verification rejected: {{reason}}"
+      },
+      "post_approved": {
+        "title": "Donation approved",
+        "message": "ඔබේ {{food}} post approve කර visible කරන ලදී."
+      },
+      "post_rejected": {
+        "title": "Donation rejected",
+        "message": "ඔබේ {{food}} post admin විසින් reject කරන ලදී."
+      },
+      "verification_submitted": {
+        "title": "Verification submitted",
+        "message": "{{name}} ({{role}}) verification documents upload කළා."
+      },
+      "task_released": {
+        "title": "Volunteer task release",
+        "message": "{{food}} සඳහා volunteer තවදුරටත් නොමැත. වෙන volunteer කෙනෙක් සඳහා බලා සිටිමු."
+      },
+      "delivery_reminder": {
+        "title": "Delivery still needed",
+        "message": "{{food}} සඳහා volunteer අවශ්‍යයි. Available Tasks බලන්න."
+      },
+      "delivery_escalated_donor": {
+        "title": "No volunteer for your donation",
+        "message": "{{food}} සඳහා volunteer නැත. Donation page වෙතින් ඔබ deliver කළ හැක."
+      },
+      "delivery_escalated_beneficiary": {
+        "title": "No volunteer for your claim",
+        "message": "{{food}} සඳහා volunteer නැත. Self pickup හෝ cancel කරන්න."
+      },
+      "delivery_escalated_admin": {
+        "title": "Stale delivery needs action",
+        "message": "{{food}} සඳහා volunteer නැත. Assign කරන්න."
+      },
+      "self_pickup_selected": {
+        "title": "Beneficiary will pick up",
+        "message": "Beneficiary {{food}} තමන්ම pick up කරයි."
+      },
+      "claim_cancelled": {
+        "title": "Claim cancelled",
+        "message": "{{food}} claim cancel — නැවත available."
+      },
+      "donor_will_deliver": {
+        "title": "Donor will deliver",
+        "message": "Donor {{food}} deliver කරයි."
+      },
+      "admin_assigned_task": {
+        "title": "Admin assigned delivery",
+        "message": "ඔබ {{food}} deliver කිරීමට assign කරන ලදී."
+      }
+    }
+  },
+  "deliveryTracking": {
+    "title": "Delivery Progress",
+    "deliveryStatus": "Delivery status",
+    "waitingForVolunteer": "මෙම delivery accept කිරීමට volunteer කෙනෙක් බලා සිටිමු.",
+    "escalatedWaiting": "Volunteer නැත — food waste වළක්වා ගැනීමට පහත option එකක් තෝරන්න.",
+    "volunteer": "Volunteer",
+    "notAssigned": "තවම assign නොවීය",
+    "dropoffLocation": "Delivery address"
+  },
+  "escalation": {
+    "title": "Volunteer නැත",
+    "description": "මෙම delivery බොහෝ kāලයක් රැඳී සිටිය. Food waste වළක්වා ගැනීමට option එකක් තෝරන්න.",
+    "selfPickup": "මමම pick up කරමි",
+    "cancelClaim": "මගේ claim cancel කරන්න",
+    "donorDelivery": "මම beneficiary වෙත deliver කරමි",
+    "confirmSelfPickup": "Donor location වෙතින් ඔබම pick up කරනවාද?",
+    "confirmCancelClaim": "Claim cancel කරනවාද? Food නැවත available වේ.",
+    "confirmDonorDelivery": "Beneficiary වෙත ඔබම deliver කරනවාද?",
+    "actionFailed": "Action complete කිරීම අසාර්ථක විය"
   },
   "sidebar": {
     "dashboard": "උපකරණ පුවරුව",
@@ -134,14 +251,114 @@
     "valueTrust": "Trust & Safety",
     "valueTrustDesc": "verified users සහ transparent processes everyone safe තබයි.",
     "ctaTitle": "වෙනසක් කිරීමට ready ද?",
-    "ctaButton": "Get Started"
+    "ctaButton": "ආරම්භ කරන්න",
+    "imageAlt": "ප්‍රජා උද්‍යානය",
+    "timelineTitle": "අපගේ ගමන",
+    "timeline1Year": "2024 ආරම්භය",
+    "timeline1Label": "වේදිකාව දියත් කිරීම",
+    "timeline2Year": "2024",
+    "timeline2Label": "පළමු ආහාර 100",
+    "timeline3Year": "2024 මැද",
+    "timeline3Label": "ස්වේච්ඡා ජාලය",
+    "timeline4Year": "2024 අවසාන",
+    "timeline4Label": "ප්‍රජා වර්ධනය",
+    "timeline5Year": "2025",
+    "timeline5Label": "පුළුල් වීම",
+    "timelineLatestYear": "අද",
+    "timelineLatestLabel": "අපගේ මෙහෙවරට එක්වන්න",
+    "claimMeal": "ආරම්භ කරන්න",
+    "footer": "© 2024 HungerHelp. එකට වඩා හොඳ අනාගතයක් ගොඩනගමු."
+  },
+  "api": {
+    "adminAccessRequired": "පරිපාලක ප්‍රවේශය අවශ්‍යයි",
+    "userNotFound": "පරිශීලකයා හමු නොවීය",
+    "cannotModifyAdmin": "පරිපාලක ගිණුම් වෙනස් කළ නොහැක",
+    "noVerificationDocs": "පරිශීලකයා සත්‍යාපන ලේඛන upload කර නැත",
+    "cannotRejectAdmin": "පරිපාලක ගිණුම් ප්‍රතික්ෂේප කළ නොහැක",
+    "postNotFound": "පළ කිරීම හමු නොවීය",
+    "deliveryNotFound": "බෙදාහැරීම් කාර්යය හමු නොවීය",
+    "loginFieldsRequired": "විද්‍යුත් තැපෑල, මුරපදය සහ role අවශ්‍යයි",
+    "invalidCredentials": "වලංගු නොවන විද්‍යුත් තැපෑල හෝ මුරපදය",
+    "noValidFields": "යාවත්කාලීන කිරීමට වලංගු ක්ෂේත්‍ර නැත",
+    "emailExists": "විද්‍යුත් තැපෑල දැනටමත් ඇත",
+    "tokenMissing": "Token නැත",
+    "tokenExpired": "Token කල් ඉකුත් විය",
+    "invalidToken": "වලංගු නොවන token",
+    "tokenInvalid": "Token වලංගු නොවේ",
+    "onlyDonorsPost": "දායකයින්ට පමණක් ආහාර පළ කළ හැක",
+    "missingFoodType": "අවශ්‍ය ක්ෂේත්‍ර නැත (food_type)",
+    "districtCityRequired": "දistrict සහ නගරය අවශ්‍යයි",
+    "locationRequired": "ස්ථානය අවශ්‍යයි",
+    "onlyDonorsFulfill": "දායකයින්ට පමණක් ඉල්ලීම් සපුරාලිය හැක",
+    "missingRequestIds": "request_id හෝ beneficiary_id නැත",
+    "onlyBeneficiariesClaim": "ප්‍රතිලාභ ලබන්නන්ට පමණක් ආහාර claim කළ හැක",
+    "postNotFoundOrClaimed": "ආහාර පළ කිරීම හමු නොවීය හෝ දැනටමත් claim කර ඇත",
+    "onlyBeneficiariesCreateRequest": "ප්‍රතිලාභ ලබන්නන්ට පමණක් ආහාර ඉල්ලීම් සාදා ගත හැක",
+    "onlyBeneficiariesDeleteRequest": "ප්‍රතිලාභ ලබන්නන්ට පමණක් ඉල්ලීම් මකා දැමිය හැක",
+    "requestNotFound": "ඉල්ලීම හමු නොවීය",
+    "deleteOwnRequestsOnly": "ඔබේම ඉල්ලීම් පමණක් මකා දැමිය හැක",
+    "deleteRequestFailed": "ඉල්ලීම මකා දැමීම අසාර්ථකයි",
+    "onlyBeneficiariesUpdateRequest": "ප්‍රතිලාභ ලබන්නන්ට පමණක් ඉල්ලීම් යාවත්කාලීන කළ හැක",
+    "editOwnRequestsOnly": "ඔබේම ඉල්ලීම් පමණක් සංස්කරණය කළ හැක",
+    "matchedRequestNotEditable": "ගැලපුණු ඉල්ලීම් සංස්කරණය කළ නොහැක. My Claims බලන්න.",
+    "requestRemoved": "මෙම ඉල්ලීම ඉවත් කරන ලදී",
+    "nothingToUpdate": "යාවත්කාලීන කිරීමට දෙයක් නැත",
+    "requestAlreadyMatched": "දායකයෙක් දැනටමත් ගැලපී ඇත. My Claims බලන්න.",
+    "unsupportedRole": "සහාය නොදක්වන role",
+    "adminNoUpload": "පරිපාලකයින්ට ලේඛන upload කළ නොහැක",
+    "noDocumentFile": "ලේඛන ගොනුවක් සපයා නැත",
+    "invalidFile": "වලංගු නොවන ගොනුව",
+    "allowedFormats": "අනුමත ආකෘති: PDF, JPG, JPEG, PNG",
+    "documentNotFound": "ලේඛනය හමු නොවීය",
+    "unauthorized": "අනවසරය",
+    "onlyVolunteersViewTasks": "ස්වේච්ඡා පමණක් කාර්ය බලන්න",
+    "onlyVolunteersAccept": "ස්වේච්ඡා පමණක් කාර්ය accept කරන්න",
+    "acceptTaskFailed": "කාර්ය accept කිරීම අසාර්ථකයි හෝ දැනටමත් ගත්තා",
+    "invalidStatus": "වලංගු නොවන status",
+    "unauthorizedOrTaskNotFound": "අනවසරය හෝ කාර්යය හමු නොවීය",
+    "updateStatusFailed": "status යාවත්කාලීන කිරීම අසාර්ථකයි",
+    "noDonationPermission": "මෙම දායකත්වය බැලීමට අවසර නැත",
+    "invalidPostId": "වලංගු නොවන post ID",
+    "missingStatus": "status නැත",
+    "statusUpdated": "status යාවත්කාලීන විය",
+    "updateFailed": "යාවත්කාලීන කිරීම අසාර්ථකයි",
+    "missingUpdateData": "යාවත්කාලීන දත්ත නැත",
+    "loginSuccess": "සාර්ථකව පිවිසුණා",
+    "profileUpdated": "පැතිකඩ සාර්ථකව යාවත්කාලීන විය",
+    "userCreated": "පරිශීලකයා සාර්ථකව සාදන ලදී",
+    "requestCreated": "ආහාර ඉල්ලීම සාර්ථකව සාදන ලදී",
+    "requestDeleted": "ඉල්ලීම සාර්ථකව මකා දමන ලදී",
+    "requestUpdated": "ඉල්ලීම සාර්ථකව යාවත්කාලීන විය",
+    "foodPostCreated": "ආහාර පළ කිරීම සාදන ලදී",
+    "requestFulfilled": "ඉල්ලීම සපුරාලන ලදී. බෙදාහැරීම් කාර්යය සාදන ලදී.",
+    "foodClaimed": "ආහාර claim කරන ලදී. බෙදාහැරීම් කාර්යය සාදන ලදී.",
+    "documentUploaded": "ලේඛනය සාර්ථකව upload කරන ලදී",
+    "documentRemoved": "ලේඛනය සාර්ථකව ඉවත් කරන ලදී",
+    "userVerified": "පරිශීලකයා සාර්ථකව සත්‍යාපනය විය",
+    "userRejected": "පරිශීලකයා සාර්ථකව ප්‍රතික්ෂේප විය",
+    "postRejected": "ආහාර පළ කිරීම ප්‍රතික්ෂේප කර සැඟවුණි",
+    "postApproved": "ආහාර පළ කිරීම අනුමත කර ප්‍රකාශයට පත් කරන ලදී",
+    "taskAccepted": "කාර්යය සාර්ථකව accept කරන ලදී",
+    "resubmitUnderReview": "නැවත ඉදිරිපත් කළ ලේඛන සමාලෝචනයේ ඇත. පරිපාලකයා නැවත අනුමත කරන තුරු ප්‍රවේශය අගුළු දමා ඇත.",
+    "accountRejectedLocked": "ඔබේ ගිණුම ප්‍රතික්ෂේප විය. Profile හි ලේඛන නැවත upload කරන්න. පරිපාලකයා නැවත අනුමත කරන තුරු ප්‍රවේශය අගුළු දමා ඇත.",
+    "statusMustBeOneOf": "status මෙයින් එකක් විය යුතුය: {{list}}",
+    "wrongRoleLogin": "මෙම ගිණුම {{registered}} ලෙස ලියාපදිංචි වී ඇත, {{attempted}} නොවේ",
+    "fieldRequired": "{{field}} අවශ්‍යයි",
+    "fulfillRequestFailed": "ඉල්ලීම සපුරාලීම අසාර්ථකයි",
+    "claimFoodFailed": "ආහාර claim කිරීම අසාර්ථකයි",
+    "deliveryUpdated": "බෙදාහැරීම {{status}} ලෙස යාවත්කාලීන විය",
+    "statusUpdatedTo": "status {{status}} ලෙස යාවත්කාලීන විය",
+    "networkError": "ජාල දෝෂයක්. ඔබේ සම්බන්ධතාව පරීක්ෂා කරන්න."
   },
   "profile": {
     "editProfile": "프로필 edit කරන්න",
     "saveChanges": "වෙනස්කම් save කරන්න",
     "saving": "save වෙමින්...",
     "address": "ලිපිනය",
-    "languagePreference": "භාෂා preference"
+    "languagePreference": "භාෂා preference",
+    "cityRequired": "කරුණාකර ඔබේ නගරය ඇතුළත් කරන්න.",
+    "updateSuccess": "프로필 සාර්ථකව යාවත්කාලීන කරන ලදී",
+    "updateFailed": "프로필 යාවත්කාලීන කිරීමට අසමත් විය"
   },
   "admin": {
     "dashboardTitle": "Admin Dashboard",
@@ -260,6 +477,13 @@
     "volunteerLabel": "ස්වේච්ඡා: {{name}}",
     "pickedUpBtn": "එකල් කළ",
     "markDelivered": "බෙදා හරින ලද ලෙස සලකුණු කරන්න",
+    "needsAttention": "Needs attention",
+    "assignVolunteer": "Assign volunteer",
+    "selectVolunteer": "Select volunteer",
+    "selectVolunteerFirst": "කරුණාකර volunteer කෙනෙක් තෝරන්න",
+    "assignBtn": "Assign",
+    "confirmAssignVolunteer": "මෙම volunteer assign කරන්නද?",
+    "assignVolunteerFailed": "Assign කිරීම අසාර්ථක විය",
     "notSpecified": "සඳහන් නොකළ",
     "requestsTitle": "ආහාර ඉල්ලීම් කළමනාකරණය",
     "requestsSubtitle": "අවශ්‍යතාවය 있는 ප්‍රතිලාභ ලබන්නන්ගේ ආහාර ඉල්ලීම් සමාලෝචනය කර සම්බන්ධ කරන්න.",
@@ -808,6 +1032,9 @@
       "updating": "යාවත්කාලීන වෙමින්...",
       "markPickedUp": "එකල් කළ ලෙස සලකුණු කරන්න",
       "markDelivered": "බෙදා හරින ලද ලෙස සලකුණු කරන්න",
+      "releaseTask": "Release Task",
+      "releaseConfirm": "මෙම task release කරන්නද? අනෙක් volunteers සඳහා open pool වෙත යයි.",
+      "releaseFailed": "Task release කිරීම අසාර්ථක විය",
       "noDeliveries": "තවම බෙදා හැරීම් නැත",
       "emptyHint": "ඔබේ සමාජයට උදව් කිරීමට ලබා ගත හැකි කාර්යයන් වෙතින් කාර්යයක් භාරගන්න.",
       "activeDeliveries": "සක්‍රිය බෙදා හැරීම් ({{count}})",

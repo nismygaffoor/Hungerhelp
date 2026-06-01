@@ -81,6 +81,14 @@ def create_post():
         data['status'] = 'Active'
         
     post_id = FoodPost.create(data)
+
+    if not data.get("is_recurring") and data.get("status", "Available") == "Available":
+        try:
+            from services.sms_claim import notify_beneficiaries_new_food
+            notify_beneficiaries_new_food(post_id)
+        except Exception as exc:
+            print(f"SMS food alert skipped: {exc}")
+
     return jsonify({"message": "Food post created", "post_id": post_id}), 201
 
 @food_bp.route('/', methods=['GET'])
@@ -249,6 +257,19 @@ def fulfill_request():
             dropoff_location=dropoff_location,
             claim_id=str(claim_id)
         )
+
+        from utils.notifications import notify_request_fulfilled, notify_new_delivery_task
+        from models.user import User as UserModel
+        donor = UserModel.collection.find_one(
+            {"_id": ObjectId(current_user['user_id'])},
+            {"name": 1},
+        )
+        notify_request_fulfilled(
+            beneficiary_id,
+            donor.get('name') if donor else 'A donor',
+            data.get('food_type'),
+        )
+        notify_new_delivery_task(data.get('food_type'))
 
         return jsonify({
             "message": "Request fulfilled successfully. Delivery task created.",
@@ -551,6 +572,11 @@ def get_post_detail(post_id):
             post['parent_recurring_id'] = str(post['parent_recurring_id'])
         if 'claimed_by' in post:
             post['claimed_by'] = str(post['claimed_by'])
+
+        from models.delivery import DeliveryTask as DeliveryTaskModel
+        post['delivery'] = DeliveryTaskModel.serialize_for_post(post_id)
+        post['fulfillment_mode'] = post.get('fulfillment_mode')
+        post['delivery_escalated'] = bool(post.get('delivery_escalated'))
         
         return jsonify(post), 200
     except Exception as e:
@@ -693,51 +719,70 @@ def claim_food_consolidated(post_id):
     if str(current_user['role']).lower() != 'beneficiary':
         return jsonify({"error": "Only beneficiaries can claim food"}), 403
 
-    try:
-        # 1. Fetch Post Details and Update
-        query = {"_id": ObjectId(post_id), "status": "Available"}
-        post = FoodPost.collection.find_one(query)
-        
-        if not post:
-            return jsonify({"error": "Food post not found or already claimed"}), 404
+    from services.food_claim import claim_food_post
 
-        # Execute status update on FoodPost
-        FoodPost.collection.update_one(
-            {"_id": ObjectId(post_id)},
-            {"$set": {
-                "status": "Claimed",
-                "claimed_by": ObjectId(current_user['user_id']),
-                "claimed_at": datetime.utcnow()
-            }}
-        )
+    success, message, claim_id = claim_food_post(post_id, current_user['user_id'])
+    if not success:
+        status = 404 if "not found" in message.lower() or "already claimed" in message.lower() else 400
+        return jsonify({"error": message}), status
 
-        # 2. Create Claim Document
-        from models.claim import Claim
-        claim_id = Claim.collection.insert_one({
-            "beneficiary_id": ObjectId(current_user['user_id']),
-            "post_id": ObjectId(post_id),
-            "donor_id": post['donor_id'],
-            "status": "Claimed",
-            "claimed_at": datetime.utcnow()
-        }).inserted_id
+    return jsonify({
+        "message": message,
+        "claim_id": claim_id,
+    }), 201
 
-        # 3. Create Delivery Task
-        from models.delivery import DeliveryTask
-        dropoff_location = current_user.get('address', "Beneficiary Address")
-        
-        DeliveryTask.create_task(
-            post_id=post_id,
-            pickup_location=post['location'],
-            dropoff_location=dropoff_location,
-            claim_id=str(claim_id)
-        )
 
-        return jsonify({
-            "message": "Food claimed successfully. Delivery task created.", 
-            "claim_id": str(claim_id)
-        }), 201
+@food_bp.route('/<post_id>/self-pickup', methods=['POST'])
+@token_required
+def beneficiary_self_pickup_route(post_id):
+    current_user = request.user_data
+    if current_user['role'] != 'Beneficiary':
+        return jsonify({"error": "Only beneficiaries can choose self pickup"}), 403
 
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": f"Failed to claim food: {str(e)}"}), 500
+    task = DeliveryTask.get_by_post_id(post_id)
+    if not task or task.get("escalation_stage") != "escalated" or task.get("status") != "Pending":
+        return jsonify({"error": "Self pickup is available only after delivery is escalated with no volunteer"}), 400
+
+    from services.fulfillment import beneficiary_self_pickup
+    success, message = beneficiary_self_pickup(post_id, current_user['user_id'])
+    if success:
+        return jsonify({"message": message}), 200
+    return jsonify({"error": message}), 400
+
+
+@food_bp.route('/<post_id>/cancel-claim', methods=['POST'])
+@token_required
+def beneficiary_cancel_claim_route(post_id):
+    current_user = request.user_data
+    if current_user['role'] != 'Beneficiary':
+        return jsonify({"error": "Only beneficiaries can cancel claims"}), 403
+
+    task = DeliveryTask.get_by_post_id(post_id)
+    if not task or task.get("escalation_stage") != "escalated":
+        return jsonify({"error": "Cancel is available only after delivery is escalated with no volunteer"}), 400
+    if task.get("status") not in ("Pending", "Assigned"):
+        return jsonify({"error": "Delivery already in progress"}), 400
+
+    from services.fulfillment import beneficiary_cancel_claim
+    success, message = beneficiary_cancel_claim(post_id, current_user['user_id'])
+    if success:
+        return jsonify({"message": message}), 200
+    return jsonify({"error": message}), 400
+
+
+@food_bp.route('/<post_id>/donor-delivery', methods=['POST'])
+@token_required
+def donor_self_delivery_route(post_id):
+    current_user = request.user_data
+    if current_user['role'] != 'Donor':
+        return jsonify({"error": "Only donors can offer to deliver"}), 403
+
+    task = DeliveryTask.get_by_post_id(post_id)
+    if not task or task.get("escalation_stage") != "escalated" or task.get("status") != "Pending":
+        return jsonify({"error": "Self delivery is available only after delivery is escalated with no volunteer"}), 400
+
+    from services.fulfillment import donor_self_delivery
+    success, message = donor_self_delivery(post_id, current_user['user_id'])
+    if success:
+        return jsonify({"message": message}), 200
+    return jsonify({"error": message}), 400

@@ -18,9 +18,13 @@ import {
 import EditDonationModal from './EditDonationModal';
 import { getPostAddressDisplay } from '../../constants/locations';
 import { translateStatus, translateCategory, translateFrequency, translateDay } from '../../i18n/donorVolunteerI18n';
+import { useDialog } from '../../context/DialogContext';
+import DeliveryTrackingCard from '../../components/delivery/DeliveryTrackingCard';
+import EscalationActions from '../../components/delivery/EscalationActions';
 
 const DonationDetail = () => {
     const { t } = useTranslation();
+    const { toast, confirmDialog } = useDialog();
     const { id } = useParams();
     const navigate = useNavigate();
     const [donation, setDonation] = useState(null);
@@ -42,7 +46,7 @@ const DonationDetail = () => {
             setDonation(res.data);
         } catch (err) {
             console.error('Failed to fetch donation details:', err);
-            alert(t('donor.donationDetail.loadFailed'));
+            toast.error(t('donor.donationDetail.loadFailed'));
             navigate('/donor/history');
         } finally {
             setLoading(false);
@@ -50,12 +54,13 @@ const DonationDetail = () => {
     };
 
     const handleDelete = async () => {
-        if (!confirm(t('donor.donationDetail.deleteConfirm'))) return;
+        const ok = await confirmDialog(t('donor.donationDetail.deleteConfirm'), { variant: 'danger' });
+        if (!ok) return;
         try {
             await api.delete(`/food/${id}`);
             navigate('/donor/history');
         } catch (err) {
-            alert(t('donor.donationDetail.deleteFailed'));
+            toast.error(t('donor.donationDetail.deleteFailed'));
         }
     };
 
@@ -110,11 +115,15 @@ const DonationDetail = () => {
         'Available': 'bg-green-100 text-green-700',
         'Active': 'bg-blue-100 text-blue-700',
         'Paused': 'bg-amber-100 text-amber-700',
+        'Claimed': 'bg-teal-100 text-teal-700',
         'Pending Pickup': 'bg-[#98E158] text-white',
+        'In Transit': 'bg-purple-100 text-purple-700',
         'Delivered': 'bg-purple-100 text-purple-700',
         'Cancelled': 'bg-red-100 text-red-700',
         'Expired': 'bg-gray-100 text-gray-500'
     };
+
+    const showDeliveryTracking = donation.delivery && !['Available', 'Active', 'Paused', 'Cancelled', 'Rejected'].includes(donation.status);
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
@@ -302,6 +311,19 @@ const DonationDetail = () => {
                                     </p>
                                 </div>
                             </div>
+
+                            {showDeliveryTracking && (
+                                <DeliveryTrackingCard delivery={donation.delivery} />
+                            )}
+
+                            {showDeliveryTracking && (
+                                <EscalationActions
+                                    role="Donor"
+                                    postId={id}
+                                    delivery={donation.delivery}
+                                    onUpdated={fetchDonationDetail}
+                                />
+                            )}
 
                             <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 space-y-4">
                                 <button

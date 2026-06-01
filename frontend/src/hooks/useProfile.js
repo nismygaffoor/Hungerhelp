@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { useDialog } from '../context/DialogContext';
 
 export const formatMemberSince = (dateStr) => {
     if (!dateStr) return '—';
@@ -13,6 +15,8 @@ export const getInitials = (name) => {
 };
 
 export const useProfile = () => {
+    const { t } = useTranslation();
+    const { toast } = useDialog();
     const { user, updateUser } = useAuth();
     const [profile, setProfile] = useState(null);
     const [stats, setStats] = useState(null);
@@ -67,7 +71,7 @@ export const useProfile = () => {
 
     const saveProfile = async () => {
         if (form.district && !form.city) {
-            alert('Please enter your city.');
+            toast.warning(t('profile.cityRequired'));
             return;
         }
         setSaving(true);
@@ -76,9 +80,9 @@ export const useProfile = () => {
             setProfile(res.data.user);
             updateUser(res.data.user);
             setEditing(false);
-            alert('Profile updated successfully');
+            toast.success(t('profile.updateSuccess'));
         } catch (err) {
-            alert(err.response?.data?.error || 'Failed to update profile');
+            toast.error(err.response?.data?.error || t('profile.updateFailed'));
         } finally {
             setSaving(false);
         }

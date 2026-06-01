@@ -12,9 +12,11 @@ import {
 import api from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
 import EditDonationModal from './EditDonationModal';
+import { useDialog } from '../../context/DialogContext';
 
 const Recurring = () => {
     const { t } = useTranslation();
+    const { toast, confirmDialog } = useDialog();
     const [recurringItems, setRecurringItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -94,18 +96,19 @@ const Recurring = () => {
             await api.patch(`/food/${item._id}/status`, { status: newStatus });
             fetchRecurring();
         } catch (err) {
-            alert(t('donor.recurring.statusFailed'));
+            toast.error(t('donor.recurring.statusFailed'));
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm(t('donor.recurring.removeConfirm'))) return;
+        const ok = await confirmDialog(t('donor.recurring.removeConfirm'), { variant: 'danger' });
+        if (!ok) return;
         try {
             await api.delete(`/food/${id}`);
             fetchRecurring();
             setOpenMenuId(null);
         } catch (err) {
-            alert(t('donor.recurring.deleteFailed'));
+            toast.error(t('donor.recurring.deleteFailed'));
         }
     };
 

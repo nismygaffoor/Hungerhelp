@@ -21,7 +21,11 @@
     "logout": "Logout",
     "downloadCsvReport": "Download CSV Report",
     "accessDenied": "Access Denied: You do not have permission to view this page.",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "confirmTitle": "Are you sure?",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK"
   },
   "roles": {
     "donor": "Donor",
@@ -41,6 +45,119 @@
     "dashboard": "Dashboard",
     "yourProfile": "Your Profile",
     "language": "Language"
+  },
+  "notifications": {
+    "markAllRead": "Mark all as read",
+    "justNow": "Just now",
+    "minsAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago",
+    "types": {
+      "food_claimed": {
+        "title": "Food claimed",
+        "message": "{{name}} claimed your {{food}} donation."
+      },
+      "delivery_available": {
+        "title": "New delivery task",
+        "message": "A volunteer is needed for {{food}}. Accept the task from Tasks."
+      },
+      "volunteer_assigned": {
+        "title": "Volunteer assigned",
+        "message": "{{volunteer}} accepted the delivery for {{food}}."
+      },
+      "food_picked_up": {
+        "title": "Food picked up",
+        "message": "{{volunteer}} picked up {{food}} and is on the way."
+      },
+      "food_delivered": {
+        "title": "Delivery completed",
+        "message": "{{food}} was delivered successfully."
+      },
+      "request_fulfilled": {
+        "title": "Request matched",
+        "message": "{{donor}} matched your request with {{food}}."
+      },
+      "new_food_request": {
+        "title": "New food request",
+        "message": "Someone in {{district}} needs {{food}}."
+      },
+      "account_verified": {
+        "title": "Account verified",
+        "message": "Your account has been approved. You now have full platform access."
+      },
+      "account_rejected": {
+        "title": "Account rejected",
+        "message": "Your verification was rejected: {{reason}}"
+      },
+      "post_approved": {
+        "title": "Donation approved",
+        "message": "Your {{food}} post was approved and is now visible."
+      },
+      "post_rejected": {
+        "title": "Donation rejected",
+        "message": "Your {{food}} post was rejected by an administrator."
+      },
+      "verification_submitted": {
+        "title": "Verification submitted",
+        "message": "{{name}} ({{role}}) uploaded verification documents for review."
+      },
+      "task_released": {
+        "title": "Volunteer released task",
+        "message": "The volunteer for {{food}} is no longer available. Waiting for another volunteer."
+      },
+      "delivery_reminder": {
+        "title": "Delivery still needed",
+        "message": "{{food}} still needs a volunteer. Please check Available Tasks."
+      },
+      "delivery_escalated_donor": {
+        "title": "No volunteer for your donation",
+        "message": "{{food}} has no volunteer yet. You can deliver it yourself from the donation page."
+      },
+      "delivery_escalated_beneficiary": {
+        "title": "No volunteer for your claim",
+        "message": "{{food}} has no volunteer yet. You can pick up yourself or cancel the claim."
+      },
+      "delivery_escalated_admin": {
+        "title": "Stale delivery needs action",
+        "message": "{{food}} has no volunteer. Assign one or wait for donor/beneficiary action."
+      },
+      "self_pickup_selected": {
+        "title": "Beneficiary will pick up",
+        "message": "The beneficiary will pick up {{food}} themselves."
+      },
+      "claim_cancelled": {
+        "title": "Claim cancelled",
+        "message": "The claim for {{food}} was cancelled. It is available again."
+      },
+      "donor_will_deliver": {
+        "title": "Donor will deliver",
+        "message": "The donor will deliver {{food}} to you."
+      },
+      "admin_assigned_task": {
+        "title": "Admin assigned you a delivery",
+        "message": "You were assigned to deliver {{food}}."
+      }
+    }
+  },
+  "deliveryTracking": {
+    "title": "Delivery Progress",
+    "deliveryStatus": "Delivery status",
+    "waitingForVolunteer": "Waiting for a volunteer to accept this delivery.",
+    "escalatedWaiting": "No volunteer yet — please choose an option below to avoid food waste.",
+    "volunteer": "Volunteer",
+    "notAssigned": "Not assigned yet",
+    "dropoffLocation": "Delivery address"
+  },
+  "escalation": {
+    "title": "No volunteer available",
+    "description": "This delivery was waiting too long. Choose how to proceed so food is not wasted.",
+    "selfPickup": "I will pick up myself",
+    "cancelClaim": "Cancel my claim",
+    "donorDelivery": "I will deliver to beneficiary",
+    "confirmSelfPickup": "Pick up this food yourself from the donor location?",
+    "confirmCancelClaim": "Cancel your claim? The food will be available for others again.",
+    "confirmDonorDelivery": "You will deliver this food to the beneficiary yourself?",
+    "actionFailed": "Could not complete this action"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -134,14 +251,114 @@
     "valueTrust": "Trust & Safety",
     "valueTrustDesc": "Verified users and transparent processes keep everyone safe.",
     "ctaTitle": "Ready to make a difference?",
-    "ctaButton": "Get Started"
+    "ctaButton": "Get Started",
+    "imageAlt": "Community Gardening",
+    "timelineTitle": "Our Journey",
+    "timeline1Year": "Founded 2024",
+    "timeline1Label": "Platform Launch",
+    "timeline2Year": "2024",
+    "timeline2Label": "First 100 Meals",
+    "timeline3Year": "Mid 2024",
+    "timeline3Label": "Volunteer Network",
+    "timeline4Year": "Late 2024",
+    "timeline4Label": "Community Growth",
+    "timeline5Year": "2025",
+    "timeline5Label": "Expanded Reach",
+    "timelineLatestYear": "Today",
+    "timelineLatestLabel": "Join the Mission",
+    "claimMeal": "Get Started",
+    "footer": "© 2024 HungerHelp. Building a better future together."
+  },
+  "api": {
+    "adminAccessRequired": "Admin access required",
+    "userNotFound": "User not found",
+    "cannotModifyAdmin": "Cannot modify admin accounts",
+    "noVerificationDocs": "User has not uploaded verification documents",
+    "cannotRejectAdmin": "Cannot reject admin accounts",
+    "postNotFound": "Post not found",
+    "deliveryNotFound": "Delivery task not found",
+    "loginFieldsRequired": "Email, password, and role are required",
+    "invalidCredentials": "Invalid email or password",
+    "noValidFields": "No valid fields to update",
+    "emailExists": "Email already exists",
+    "tokenMissing": "Token is missing",
+    "tokenExpired": "Token has expired",
+    "invalidToken": "Invalid token",
+    "tokenInvalid": "Token invalid",
+    "onlyDonorsPost": "Only donors can post food",
+    "missingFoodType": "Missing required fields (food_type)",
+    "districtCityRequired": "District and city are required",
+    "locationRequired": "Location is required",
+    "onlyDonorsFulfill": "Only donors can fulfill requests",
+    "missingRequestIds": "Missing request_id or beneficiary_id",
+    "onlyBeneficiariesClaim": "Only beneficiaries can claim food",
+    "postNotFoundOrClaimed": "Food post not found or already claimed",
+    "onlyBeneficiariesCreateRequest": "Only beneficiaries can create food requests",
+    "onlyBeneficiariesDeleteRequest": "Only beneficiaries can delete requests",
+    "requestNotFound": "Request not found",
+    "deleteOwnRequestsOnly": "You can only delete your own requests",
+    "deleteRequestFailed": "Failed to delete request",
+    "onlyBeneficiariesUpdateRequest": "Only beneficiaries can update requests",
+    "editOwnRequestsOnly": "You can only edit your own requests",
+    "matchedRequestNotEditable": "Matched requests cannot be edited. Check My Claims for delivery progress.",
+    "requestRemoved": "This request was removed",
+    "nothingToUpdate": "Nothing to update",
+    "requestAlreadyMatched": "This request was already matched by a donor. Check My Claims for delivery progress.",
+    "unsupportedRole": "Unsupported role",
+    "adminNoUpload": "Admins cannot upload verification documents",
+    "noDocumentFile": "No document file provided",
+    "invalidFile": "Invalid file",
+    "allowedFormats": "Allowed formats: PDF, JPG, JPEG, PNG",
+    "documentNotFound": "Document not found",
+    "unauthorized": "Unauthorized",
+    "onlyVolunteersViewTasks": "Only volunteers can see delivery tasks",
+    "onlyVolunteersAccept": "Only volunteers can accept tasks",
+    "acceptTaskFailed": "Failed to accept task or task already taken",
+    "invalidStatus": "Invalid status",
+    "unauthorizedOrTaskNotFound": "Unauthorized or task not found",
+    "updateStatusFailed": "Failed to update status",
+    "noDonationPermission": "You do not have permission to view this donation",
+    "invalidPostId": "Invalid post ID",
+    "missingStatus": "Missing status",
+    "statusUpdated": "Status updated",
+    "updateFailed": "Failed to update",
+    "missingUpdateData": "Missing update data",
+    "loginSuccess": "Login successful",
+    "profileUpdated": "Profile updated successfully",
+    "userCreated": "User created successfully",
+    "requestCreated": "Food request created successfully",
+    "requestDeleted": "Request deleted successfully",
+    "requestUpdated": "Request updated successfully",
+    "foodPostCreated": "Food post created",
+    "requestFulfilled": "Request fulfilled successfully. Delivery task created.",
+    "foodClaimed": "Food claimed successfully. Delivery task created.",
+    "documentUploaded": "Document uploaded successfully",
+    "documentRemoved": "Document removed successfully",
+    "userVerified": "User verified successfully",
+    "userRejected": "User rejected successfully",
+    "postRejected": "Food post rejected and hidden from the platform",
+    "postApproved": "Food post approved and published",
+    "taskAccepted": "Task accepted successfully",
+    "resubmitUnderReview": "Your re-submitted documents are under review. Platform access stays locked until an admin re-approves your account.",
+    "accountRejectedLocked": "Your account was rejected. Please re-upload verification documents in your profile. Food and claim features stay locked until an admin re-approves you.",
+    "statusMustBeOneOf": "Status must be one of: {{list}}",
+    "wrongRoleLogin": "This account is registered as a {{registered}}, not a {{attempted}}",
+    "fieldRequired": "{{field}} is required",
+    "fulfillRequestFailed": "Failed to fulfill request",
+    "claimFoodFailed": "Failed to claim food",
+    "deliveryUpdated": "Delivery updated to {{status}}",
+    "statusUpdatedTo": "Status updated to {{status}}",
+    "networkError": "Network error. Please check your connection."
   },
   "profile": {
     "editProfile": "Edit Profile",
     "saveChanges": "Save Changes",
     "saving": "Saving...",
     "address": "Address",
-    "languagePreference": "Language Preference"
+    "languagePreference": "Language Preference",
+    "cityRequired": "Please enter your city.",
+    "updateSuccess": "Profile updated successfully",
+    "updateFailed": "Failed to update profile"
   },
   "admin": {
     "dashboardTitle": "Admin Dashboard",
@@ -260,6 +477,13 @@
     "volunteerLabel": "Volunteer: {{name}}",
     "pickedUpBtn": "Picked Up",
     "markDelivered": "Mark Delivered",
+    "needsAttention": "Needs attention",
+    "assignVolunteer": "Assign volunteer",
+    "selectVolunteer": "Select volunteer",
+    "selectVolunteerFirst": "Please select a volunteer first",
+    "assignBtn": "Assign",
+    "confirmAssignVolunteer": "Assign this volunteer to the delivery?",
+    "assignVolunteerFailed": "Failed to assign volunteer",
     "notSpecified": "Not specified",
     "requestsTitle": "Food Request Management",
     "requestsSubtitle": "Review and coordinate food requests from beneficiaries in need.",
@@ -808,6 +1032,9 @@
       "updating": "Updating...",
       "markPickedUp": "Mark Picked Up",
       "markDelivered": "Mark Delivered",
+      "releaseTask": "Release Task",
+      "releaseConfirm": "Release this task? It will go back to the open pool for other volunteers.",
+      "releaseFailed": "Failed to release task",
       "noDeliveries": "No Deliveries Yet",
       "emptyHint": "Accept a task from Available Tasks to start helping your community.",
       "activeDeliveries": "Active Deliveries ({{count}})",

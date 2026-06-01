@@ -14,6 +14,7 @@ import {
     AlertCircle,
     Loader2
 } from 'lucide-react';
+import { useDialog } from '../../context/DialogContext';
 
 const BACKEND_URL = 'http://localhost:5000/uploads/';
 
@@ -34,6 +35,7 @@ const isPdfFile = (name = '') => /\.pdf$/i.test(name);
 
 const VerificationReviewModal = ({ userId, onClose, onUpdated }) => {
     const { t } = useTranslation();
+    const { toast, confirmDialog } = useDialog();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [verifying, setVerifying] = useState(false);
@@ -69,11 +71,12 @@ const VerificationReviewModal = ({ userId, onClose, onUpdated }) => {
     const handleVerify = async () => {
         const docCount = user?.verification_documents?.length || 0;
         if (docCount === 0) {
-            alert(t('components.verificationReviewModal.noDocumentsAlert'));
+            toast.warning(t('components.verificationReviewModal.noDocumentsAlert'));
             return;
         }
         const name = user.name || user.businessName;
-        if (!confirm(t('components.verificationReviewModal.verifyConfirm', { name }))) return;
+        const ok = await confirmDialog(t('components.verificationReviewModal.verifyConfirm', { name }), { variant: 'danger' });
+        if (!ok) return;
 
         setVerifying(true);
         try {
@@ -81,7 +84,7 @@ const VerificationReviewModal = ({ userId, onClose, onUpdated }) => {
             onUpdated?.('verified');
             onClose();
         } catch (err) {
-            alert(err.response?.data?.error || t('components.verificationReviewModal.verifyFailed'));
+            toast.error(err.response?.data?.error || t('components.verificationReviewModal.verifyFailed'));
         } finally {
             setVerifying(false);
         }
@@ -89,7 +92,8 @@ const VerificationReviewModal = ({ userId, onClose, onUpdated }) => {
 
     const handleReject = async () => {
         const name = user.name || user.businessName;
-        if (!confirm(t('components.verificationReviewModal.rejectConfirm', { name }))) return;
+        const ok = await confirmDialog(t('components.verificationReviewModal.rejectConfirm', { name }), { variant: 'danger' });
+        if (!ok) return;
 
         setRejecting(true);
         try {
@@ -99,7 +103,7 @@ const VerificationReviewModal = ({ userId, onClose, onUpdated }) => {
             onUpdated?.('rejected');
             onClose();
         } catch (err) {
-            alert(err.response?.data?.error || t('components.verificationReviewModal.rejectFailed'));
+            toast.error(err.response?.data?.error || t('components.verificationReviewModal.rejectFailed'));
         } finally {
             setRejecting(false);
         }

@@ -13,11 +13,13 @@ import {
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
 import { DISTRICTS, getPostDistrict, getPostAddressDisplay } from '../../constants/locations';
+import { useDialog } from '../../context/DialogContext';
 
 const CATEGORY_VALUES = Object.keys(CATEGORY_KEY_MAP);
 
 const ClaimFoods = () => {
     const { t } = useTranslation();
+    const { toast, confirmDialog } = useDialog();
     const translateCategory = (c) => {
         const k = CATEGORY_KEY_MAP[c];
         return k ? t(`beneficiary.categories.${k}`) : c;
@@ -78,15 +80,16 @@ const ClaimFoods = () => {
     });
 
     const handleClaim = async (postId) => {
-        if (!confirm(t('beneficiary.confirmClaim'))) return;
+        const ok = await confirmDialog(t('beneficiary.confirmClaim'), { variant: 'danger' });
+        if (!ok) return;
 
         try {
             const res = await api.post(`/food/${postId}/claim`);
-            alert(res.data.message);
+            toast.success(res.data.message);
             setFoodPosts(foodPosts.filter(p => p._id !== postId));
         } catch (err) {
             console.error("Claim error:", err);
-            alert(err.response?.data?.message || t('beneficiary.claimFailed'));
+            toast.error(err.response?.data?.message || t('beneficiary.claimFailed'));
         }
     };
 

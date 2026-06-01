@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pymongo import MongoClient
 import os
@@ -38,6 +38,8 @@ from routes.users import users_bp
 from routes.delivery import delivery_bp
 from routes.requests import requests_bp
 from routes.feedback import feedback_bp
+from routes.notifications import notifications_bp
+from routes.sms import sms_bp
 
 @app.before_request
 def enforce_verified_platform_access():
@@ -52,6 +54,23 @@ app.register_blueprint(users_bp, url_prefix='/users')
 app.register_blueprint(delivery_bp, url_prefix='/delivery')
 app.register_blueprint(requests_bp, url_prefix='/requests')
 app.register_blueprint(feedback_bp, url_prefix='/feedback')
+app.register_blueprint(notifications_bp, url_prefix='/notifications')
+app.register_blueprint(sms_bp, url_prefix='/sms')
+
+@app.before_request
+def run_scheduled_recurring_check():
+    """Create today's recurring donation instances once per day when the API is used."""
+    if request.method == 'OPTIONS':
+        return None
+    path = request.path or ''
+    if not path.startswith('/food'):
+        return None
+    try:
+        from services.recurring_processor import maybe_process_recurring
+        maybe_process_recurring()
+    except Exception as exc:
+        print(f"Recurring check skipped: {exc}")
+    return None
 
 @app.route('/')
 def home():
@@ -65,7 +84,8 @@ def home():
             "delivery": "/delivery (GET, ACCEPT, STATUS)",
             "request": "/request (GET, POST)",
             "admin": "/admin (STATS, VERIFY)",
-            "feedback": "/feedback (POST)"
+            "feedback": "/feedback (POST)",
+            "sms": "/sms/incoming (Twilio webhook)"
         }
     })
 

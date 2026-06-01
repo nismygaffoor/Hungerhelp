@@ -39,6 +39,18 @@ def normalize_location_data(data):
     return data
 
 
+def get_user_delivery_address(user, fallback='Address not set'):
+    """Resolve a user's delivery address from stored profile fields."""
+    if not user:
+        return fallback
+    address = (user.get('address') or '').strip()
+    if address:
+        return address
+    district, home_address, city = _apply_structured_fields(user)
+    built = build_location_address(district, home_address, city)
+    return built or fallback
+
+
 def normalize_user_address(data):
     """Build user address from structured fields."""
     district, home_address, city = _apply_structured_fields(data)

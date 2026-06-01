@@ -21,6 +21,7 @@ import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
 import LocationFields from '../../components/location/LocationFields';
 import { buildLocationAddress } from '../../constants/locations';
+import { useDialog } from '../../context/DialogContext';
 
 const FREQUENCY_OPTIONS = [
     { value: 'Daily', key: 'daily' },
@@ -40,6 +41,7 @@ const DAY_OPTIONS = [
 
 const PostFood = () => {
     const { t } = useTranslation();
+    const { toast } = useDialog();
     const locationState = useLocation();
     const [items, setItems] = useState([{ category: '', name: '', quantity: '', images: [], previews: [] }]);
     const [description, setDescription] = useState('');
@@ -166,7 +168,7 @@ const PostFood = () => {
         const currentItem = items[index];
 
         if (currentItem.images.length + files.length > 1) {
-            alert(t('donor.postFood.maxImageAlert'));
+            toast.warning(t('donor.postFood.maxImageAlert'));
             return;
         }
 
@@ -195,7 +197,7 @@ const PostFood = () => {
     const handlePost = async () => {
         const invalidItems = items.some(item => !item.category || !item.quantity);
         if (invalidItems || !district || !city) {
-            alert(t('donor.postFood.requiredFieldsAlert'));
+            toast.warning(t('donor.postFood.requiredFieldsAlert'));
             return;
         }
 
@@ -248,7 +250,7 @@ const PostFood = () => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            alert(matchRequestId ? t('donor.postFood.fulfillSuccess') : t('donor.postFood.postSuccess'));
+            toast.success(matchRequestId ? t('donor.postFood.fulfillSuccess') : t('donor.postFood.postSuccess'));
             
             setItems([{ category: '', name: '', quantity: '', images: [], previews: [] }]);
             setDescription('');
@@ -259,7 +261,7 @@ const PostFood = () => {
             setDestinationType('');
             setDestinationName('');
         } catch (err) {
-            alert(t('donor.postFood.postFailed'));
+            toast.error(t('donor.postFood.postFailed'));
         } finally {
             setLoading(false);
         }

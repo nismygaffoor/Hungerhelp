@@ -5,12 +5,14 @@ import { translateStatus, CATEGORY_KEY_MAP, URGENCY_KEY_MAP } from '../../i18n/d
 import api from '../../api/axios';
 import LocationFields from '../../components/location/LocationFields';
 import { buildLocationAddress } from '../../constants/locations';
+import { useDialog } from '../../context/DialogContext';
 
 const CATEGORY_VALUES = Object.keys(CATEGORY_KEY_MAP);
 const URGENCY_LEVELS = ['Normal', 'Medium', 'High'];
 
 const EditRequestModal = ({ request, isOpen, onClose, onUpdated }) => {
     const { t } = useTranslation();
+    const { toast } = useDialog();
     const translateCategory = (c) => {
         const k = CATEGORY_KEY_MAP[c];
         return k ? t(`beneficiary.categories.${k}`) : c;
@@ -66,7 +68,7 @@ const EditRequestModal = ({ request, isOpen, onClose, onUpdated }) => {
         e.preventDefault();
         const invalidItems = items.some((item) => !item.category || !item.quantity);
         if (invalidItems || !district || !city) {
-            alert(t('beneficiary.fillRequiredEdit'));
+            toast.warning(t('beneficiary.fillRequiredEdit'));
             return;
         }
 
@@ -88,11 +90,11 @@ const EditRequestModal = ({ request, isOpen, onClose, onUpdated }) => {
                 urgency,
             };
             await api.patch(`/requests/${request._id}`, payload);
-            alert(t('beneficiary.requestUpdated'));
+            toast.success(t('beneficiary.requestUpdated'));
             onUpdated();
             onClose();
         } catch (err) {
-            alert(err.response?.data?.error || t('beneficiary.updateRequestFailed'));
+            toast.error(err.response?.data?.error || t('beneficiary.updateRequestFailed'));
         } finally {
             setSaving(false);
         }

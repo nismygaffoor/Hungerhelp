@@ -30,11 +30,15 @@ import {
 
 } from 'lucide-react';
 
+import { useDialog } from '../../context/DialogContext';
+
 
 
 const Tasks = () => {
 
     const { t } = useTranslation();
+
+    const { toast, confirmDialog } = useDialog();
 
     const navigate = useNavigate();
 
@@ -146,7 +150,9 @@ const Tasks = () => {
 
     const handleAccept = async (taskId) => {
 
-        if (!confirm(t('volunteer.tasks.acceptConfirm'))) return;
+        const ok = await confirmDialog(t('volunteer.tasks.acceptConfirm'), { variant: 'danger' });
+
+        if (!ok) return;
 
 
 
@@ -156,7 +162,7 @@ const Tasks = () => {
 
             const res = await api.post(`/delivery/${taskId}/accept`);
 
-            alert(res.data.message);
+            toast.success(res.data.message);
 
             setTasks(tasks.filter(t => t._id !== taskId));
 
@@ -166,7 +172,7 @@ const Tasks = () => {
 
             console.error('Accept error:', err);
 
-            alert(err.response?.data?.message || t('volunteer.tasks.acceptFailed'));
+            toast.error(err.response?.data?.message || t('volunteer.tasks.acceptFailed'));
 
             fetchTasks();
 

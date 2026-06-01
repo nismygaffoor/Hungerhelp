@@ -243,6 +243,8 @@ def verify_user(user_id):
             "$unset": {"rejection_reason": ""},
         }
     )
+    from utils.notifications import notify_account_verified
+    notify_account_verified(user_id, user.get('role'))
     return jsonify({"message": "User verified successfully"}), 200
 
 @admin_bp.route('/users/<user_id>/reject', methods=['POST'])
@@ -270,6 +272,12 @@ def reject_user(user_id):
                 "rejection_reason": reason or "Account rejected by administrator.",
             }
         }
+    )
+    from utils.notifications import notify_account_rejected
+    notify_account_rejected(
+        user_id,
+        reason or "Account rejected by administrator.",
+        user.get('role'),
     )
     return jsonify({"message": "User rejected successfully"}), 200
 
@@ -322,6 +330,10 @@ def reject_post(post_id):
     )
     if result.matched_count == 0:
         return jsonify({"error": "Post not found"}), 404
+    post = FoodPost.collection.find_one({"_id": ObjectId(post_id)}, {"donor_id": 1, "food_type": 1})
+    if post and post.get('donor_id'):
+        from utils.notifications import notify_post_rejected
+        notify_post_rejected(str(post['donor_id']), post.get('food_type'))
     return jsonify({"message": "Food post rejected and hidden from the platform"}), 200
 
 @admin_bp.route('/posts/<post_id>/approve', methods=['POST'])
@@ -340,6 +352,15 @@ def approve_post(post_id):
         {"_id": ObjectId(post_id)},
         {"$set": {"status": new_status}}
     )
+    if post.get('donor_id'):
+        from utils.notifications import notify_post_approved
+        notify_post_approved(str(post['donor_id']), post.get('food_type'))
+    if new_status == "Available" and not post.get("is_recurring"):
+        try:
+            from services.sms_claim import notify_beneficiaries_new_food
+            notify_beneficiaries_new_food(post_id)
+        except Exception as exc:
+            print(f"SMS food alert skipped: {exc}")
     return jsonify({"message": "Food post approved and published"}), 200
 
 @admin_bp.route('/deliveries', methods=['GET'])
@@ -349,6 +370,9 @@ def get_all_deliveries():
     if current_user['role'] != 'Admin':
         return jsonify({"error": "Admin access required"}), 403
 
+    from services.delivery_escalation import maybe_process_escalations
+    maybe_process_escalations()
+
     deliveries = []
     for task in DeliveryTask.collection.find().sort("created_at", -1):
         task['_id'] = str(task['_id'])
@@ -356,6 +380,10 @@ def get_all_deliveries():
         created_at = task.get('created_at')
         if hasattr(created_at, 'isoformat'):
             task['created_at'] = created_at.isoformat()
+        escalated_at = task.get('escalated_at')
+        if hasattr(escalated_at, 'isoformat'):
+            task['escalated_at'] = escalated_at.isoformat()
+        task['escalation_stage'] = task.get('escalation_stage', 'none')
         post = FoodPost.collection.find_one({"_id": ObjectId(task['post_id'])}) if task.get('post_id') else None
         if post:
             task['food_type'] = post.get('food_type', 'Food Donation')
@@ -406,3 +434,32 @@ def update_delivery_status(task_id):
             FoodPost.collection.update_one({"_id": ObjectId(post_id)}, {"$set": {"status": "Available"}})
 
     return jsonify({"message": f"Delivery updated to {new_status}"}), 200
+
+@admin_bp.route('/deliveries/process-escalations', methods=['POST'])
+@token_required
+def run_delivery_escalations():
+    current_user = request.user_data
+    if current_user['role'] != 'Admin':
+        return jsonify({"error": "Admin access required"}), 403
+
+    from services.delivery_escalation import process_delivery_escalations
+    result = process_delivery_escalations()
+    return jsonify({"message": "Escalation check completed", "result": result}), 200
+
+@admin_bp.route('/deliveries/<task_id>/assign', methods=['POST'])
+@token_required
+def admin_assign_delivery(task_id):
+    current_user = request.user_data
+    if current_user['role'] != 'Admin':
+        return jsonify({"error": "Admin access required"}), 403
+
+    data = request.json or {}
+    volunteer_id = data.get('volunteer_id')
+    if not volunteer_id:
+        return jsonify({"error": "volunteer_id is required"}), 400
+
+    from services.fulfillment import admin_assign_volunteer
+    success, message = admin_assign_volunteer(task_id, volunteer_id)
+    if success:
+        return jsonify({"message": message}), 200
+    return jsonify({"error": message}), 400

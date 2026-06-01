@@ -9,11 +9,13 @@ import {
     EmptyFeedback,
     getFeedbackCategoryLabel,
 } from './FeedbackShared';
+import { useDialog } from '../../context/DialogContext';
 
 const ROLE_OPTIONS = ['All', 'Donor', 'Beneficiary', 'Volunteer', 'Admin'];
 
 const FeedbackPageContent = ({ config }) => {
     const { t } = useTranslation();
+    const { toast } = useDialog();
     const [rating, setRating] = useState(0);
     const [category, setCategory] = useState(config.categories?.[0] || 'Other');
     const [message, setMessage] = useState('');
@@ -54,7 +56,7 @@ const FeedbackPageContent = ({ config }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!rating || !message.trim()) {
-            alert(t('feedback.ratingRequiredAlert'));
+            toast.warning(t('feedback.ratingRequiredAlert'));
             return;
         }
 
@@ -64,10 +66,10 @@ const FeedbackPageContent = ({ config }) => {
             setRating(0);
             setMessage('');
             setCategory(config.categories?.[0] || 'Other');
-            alert(t('feedback.thankYouAlert'));
+            toast.success(t('feedback.thankYouAlert'));
             fetchFeedback();
         } catch (err) {
-            alert(err.response?.data?.error || t('feedback.submitFailed'));
+            toast.error(err.response?.data?.error || t('feedback.submitFailed'));
         } finally {
             setSubmitting(false);
         }

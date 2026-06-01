@@ -5,6 +5,7 @@ import { CATEGORY_KEY_MAP, BENEFICIARY_TYPE_KEY_MAP, translateBeneficiaryType } 
 import api from '../../api/axios';
 import LocationFields from '../../components/location/LocationFields';
 import { buildLocationAddress } from '../../constants/locations';
+import { useDialog } from '../../context/DialogContext';
 
 const FREQUENCY_OPTIONS = [
     { value: 'Daily', key: 'daily' },
@@ -25,6 +26,7 @@ const DAY_OPTIONS = [
 
 const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
     const { t } = useTranslation();
+    const { toast } = useDialog();
     const [formData, setFormData] = useState({
         items: [],
         district: '',
@@ -136,7 +138,7 @@ const EditDonationModal = ({ isOpen, onClose, item, onUpdate }) => {
             onClose();
         } catch (err) {
             console.error("Update failed:", err);
-            alert(t('donor.editModal.updateFailed'));
+            toast.error(t('donor.editModal.updateFailed'));
         } finally {
             setSubmitting(false);
         }

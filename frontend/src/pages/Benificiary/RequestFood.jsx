@@ -14,12 +14,14 @@ import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
 import LocationFields from '../../components/location/LocationFields';
 import { buildLocationAddress } from '../../constants/locations';
+import { useDialog } from '../../context/DialogContext';
 
 const CATEGORY_VALUES = Object.keys(CATEGORY_KEY_MAP);
 const URGENCY_LEVELS = ['Normal', 'Medium', 'High'];
 
 const RequestFood = () => {
     const { t } = useTranslation();
+    const { toast } = useDialog();
     const translateCategory = (c) => {
         const k = CATEGORY_KEY_MAP[c];
         return k ? t(`beneficiary.categories.${k}`) : c;
@@ -58,7 +60,7 @@ const RequestFood = () => {
     const handleSubmit = async () => {
         const invalidItems = items.some(item => !item.category || !item.quantity);
         if (invalidItems || !district || !city) {
-            alert(t('beneficiary.fillRequiredFields'));
+            toast.warning(t('beneficiary.fillRequiredFields'));
             return;
         }
 
@@ -82,12 +84,12 @@ const RequestFood = () => {
 
             await api.post('/requests/', payload);
 
-            alert(t('beneficiary.requestSubmitted'));
+            toast.success(t('beneficiary.requestSubmitted'));
             setItems([{ category: '', name: '', quantity: '' }]);
             setDescription('');
             setUrgency('Normal');
         } catch (err) {
-            alert(t('beneficiary.requestSubmitFailed'));
+            toast.error(t('beneficiary.requestSubmitFailed'));
         } finally {
             setLoading(false);
         }

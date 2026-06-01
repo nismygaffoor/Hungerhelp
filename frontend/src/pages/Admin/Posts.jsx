@@ -5,6 +5,7 @@ import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
 import { translateStatus } from '../../i18n/donorVolunteerI18n';
 import { Package, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { useDialog } from '../../context/DialogContext';
 
 const STATUS_STYLES = {
     Available: 'bg-green-100 text-green-700',
@@ -17,6 +18,7 @@ const STATUS_STYLES = {
 
 const Posts = () => {
     const { t } = useTranslation();
+    const { toast, confirmDialog } = useDialog();
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [actionId, setActionId] = useState(null);
@@ -42,14 +44,15 @@ const Posts = () => {
     }, []);
 
     const handleReject = async (postId) => {
-        if (!confirm(t('admin.confirmRejectPost'))) return;
+        const ok = await confirmDialog(t('admin.confirmRejectPost'), { variant: 'danger' });
+        if (!ok) return;
         setActionId(postId);
         try {
             await api.post(`/admin/posts/${postId}/reject`);
             setMessage(t('admin.postRejected'));
             fetchPosts();
         } catch (err) {
-            alert(err.response?.data?.error || t('admin.rejectPostFailed'));
+            toast.error(err.response?.data?.error || t('admin.rejectPostFailed'));
         } finally {
             setActionId(null);
             setTimeout(() => setMessage(''), 3000);
@@ -63,7 +66,7 @@ const Posts = () => {
             setMessage(t('admin.postApproved'));
             fetchPosts();
         } catch (err) {
-            alert(err.response?.data?.error || t('admin.approvePostFailed'));
+            toast.error(err.response?.data?.error || t('admin.approvePostFailed'));
         } finally {
             setActionId(null);
             setTimeout(() => setMessage(''), 3000);

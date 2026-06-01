@@ -125,6 +125,15 @@ def upload_verification_document():
         file_path,
         file.filename
     )
+    from utils.notifications import notify_verification_submitted
+    submitter = User.collection.find_one(
+        {"_id": ObjectId(current_user['user_id'])},
+        {"name": 1, "role": 1},
+    )
+    notify_verification_submitted(
+        submitter.get('name') if submitter else 'User',
+        submitter.get('role') if submitter else current_user.get('role'),
+    )
     return jsonify({"message": "Document uploaded successfully", "document": doc}), 201
 
 @users_bp.route('/verification-documents/<doc_id>', methods=['DELETE'])

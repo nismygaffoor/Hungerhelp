@@ -1,6 +1,7 @@
 from db import db
 from datetime import datetime
 from bson.objectid import ObjectId
+import secrets
 
 class FoodPost:
     collection = db.food_posts
@@ -49,6 +50,7 @@ class FoodPost:
             "claimed_by": data.get('claimed_by'),
             "claimed_at": data.get('claimed_at'),
             "matched_request_id": data.get('matched_request_id', ''),
+            "sms_claim_code": data.get('sms_claim_code') or secrets.token_hex(3).upper(),
             "created_at": datetime.utcnow()
         }
         result = FoodPost.collection.insert_one(post_doc)

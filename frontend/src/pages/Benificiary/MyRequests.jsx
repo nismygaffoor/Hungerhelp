@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
 import { DISTRICTS, getRequestDistrict, getRequestAddressDisplay } from '../../constants/locations';
+import { useDialog } from '../../context/DialogContext';
 
 const STATUS_STYLES = {
     Active: 'bg-amber-50 text-amber-700 border-amber-100',
@@ -27,6 +28,7 @@ const URGENCY_LEVELS = ['Normal', 'Medium', 'High'];
 
 const MyRequests = () => {
     const { t } = useTranslation();
+    const { toast, confirmDialog } = useDialog();
     const navigate = useNavigate();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -65,12 +67,13 @@ const MyRequests = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm(t('beneficiary.confirmRemoveRequest'))) return;
+        const ok = await confirmDialog(t('beneficiary.confirmRemoveRequest'), { variant: 'danger' });
+        if (!ok) return;
         try {
             await api.delete(`/requests/${id}`);
             setRequests(requests.filter(r => r._id !== id));
         } catch (err) {
-            alert(err.response?.data?.error || t('beneficiary.deleteRequestFailed'));
+            toast.error(err.response?.data?.error || t('beneficiary.deleteRequestFailed'));
         }
     };
 

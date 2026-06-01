@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { DialogProvider } from './context/DialogContext';
 import Login from './pages/Login';
 import AdminLogin from './pages/Admin/AdminLogin';
 import Register from './pages/Register';
@@ -100,6 +101,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        <DialogProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -151,6 +153,7 @@ function App() {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        </DialogProvider>
       </AuthProvider>
     </Router>
   );

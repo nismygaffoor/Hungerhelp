@@ -12,6 +12,8 @@ UNVERIFIED_ALLOWED_PREFIXES = (
     '/admin',
     '/users/verification-documents',
     '/users/profile-stats',
+    '/notifications',
+    '/sms/',
 )
 
 def _extract_token():
@@ -41,7 +43,7 @@ def check_platform_access():
         return None
 
     path = request.path or ''
-    if path == '/' or path.startswith('/uploads/'):
+    if path == '/' or path.startswith('/uploads/') or path.startswith('/sms/'):
         return None
 
     for prefix in UNVERIFIED_ALLOWED_PREFIXES:

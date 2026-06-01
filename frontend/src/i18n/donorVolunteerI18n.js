@@ -112,16 +112,3 @@ export const translateDay = (day, t) => {
     const key = DAY_KEY_MAP[day];
     return key ? t(`donor.days.${key}`) : day;
 };
-
-export const FOOD_CATEGORIES = [
-    'Vegetables',
-    'Fruits',
-    'Cooked Meals',
-    'Baked Goods',
-    'Grains & Rice',
-    'Dairy',
-    'Meat & Poultry',
-    'Canned Food',
-    'Beverages',
-    'Other',
-];

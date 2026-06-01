@@ -21,7 +21,11 @@
     "logout": "வெளியேறு",
     "downloadCsvReport": "CSV அறிக்கை பதிவிறக்கம்",
     "accessDenied": "அணுகல் மறுக்கப்பட்டது: இந்த பக்கத்தைப் பார்க்க உங்களுக்கு அனுமதி இல்லை.",
-    "openMenu": "மெனுவைத் திற"
+    "openMenu": "மெனுவைத் திற",
+    "confirmTitle": "நீங்கள் உறுதியாக இருக்கிறீர்களா?",
+    "yes": "ஆம்",
+    "no": "இல்லை",
+    "ok": "சரி"
   },
   "roles": {
     "donor": "தானம் செய்பவர்",
@@ -41,6 +45,119 @@
     "dashboard": "டாஷ்போர்டு",
     "yourProfile": "உங்கள் சுயவிவரம்",
     "language": "மொழி"
+  },
+  "notifications": {
+    "markAllRead": "அனைத்தையும் படித்ததாகக் குறி",
+    "justNow": "இப்போது",
+    "minsAgo": "{{count}} நிமி முன்",
+    "hoursAgo": "{{count}} மணி முன்",
+    "daysAgo": "{{count}} நாள் முன்",
+    "types": {
+      "food_claimed": {
+        "title": "உணவு கோரப்பட்டது",
+        "message": "{{name}} உங்கள் {{food}} donation-ஐ claim செய்தார்."
+      },
+      "delivery_available": {
+        "title": "புதிய delivery task",
+        "message": "{{food}}-க்கு volunteer தேவை. Tasks-ல் accept செய்யுங்கள்."
+      },
+      "volunteer_assigned": {
+        "title": "Volunteer நியமிக்கப்பட்டது",
+        "message": "{{volunteer}} {{food}} delivery-ஐ accept செய்தார்."
+      },
+      "food_picked_up": {
+        "title": "உணவு எடுக்கப்பட்டது",
+        "message": "{{volunteer}} {{food}}-ஐ எடுத்து வழியில் உள்ளார்."
+      },
+      "food_delivered": {
+        "title": "Delivery முடிந்தது",
+        "message": "{{food}} வெற்றிகரமாக deliver செய்யப்பட்டது."
+      },
+      "request_fulfilled": {
+        "title": "கோரிக்கை match ஆனது",
+        "message": "{{donor}} உங்கள் கோரிக்கையை {{food}}-உடன் match செய்தார்."
+      },
+      "new_food_request": {
+        "title": "புதிய உணவு கோரிக்கை",
+        "message": "{{district}}-ல் யாரோ {{food}} தேவை."
+      },
+      "account_verified": {
+        "title": "கணக்கு verified",
+        "message": "உங்கள் கணக்கு அங்கீகரிக்கப்பட்டது. இப்போது full access உள்ளது."
+      },
+      "account_rejected": {
+        "title": "கணக்கு rejected",
+        "message": "Verification rejected: {{reason}}"
+      },
+      "post_approved": {
+        "title": "Donation approved",
+        "message": "உங்கள் {{food}} post approve செய்யப்பட்டு visible ஆனது."
+      },
+      "post_rejected": {
+        "title": "Donation rejected",
+        "message": "உங்கள் {{food}} post admin-ஆல் reject செய்யப்பட்டது."
+      },
+      "verification_submitted": {
+        "title": "Verification submitted",
+        "message": "{{name}} ({{role}}) verification documents upload செய்துள்ளார்."
+      },
+      "task_released": {
+        "title": "Volunteer task release",
+        "message": "{{food}}-க்கான volunteer இனி available இல்லை. வேறு volunteer-க்காக காத்திருக்கிறோம்."
+      },
+      "delivery_reminder": {
+        "title": "Delivery still needed",
+        "message": "{{food}}-க்கு volunteer தேவை. Available Tasks பாருங்கள்."
+      },
+      "delivery_escalated_donor": {
+        "title": "No volunteer for your donation",
+        "message": "{{food}}-க்கு volunteer இல்லை. Donation page-ல் நீங்களே deliver செய்யலாம்."
+      },
+      "delivery_escalated_beneficiary": {
+        "title": "No volunteer for your claim",
+        "message": "{{food}}-க்கு volunteer இல்லை. Self pickup அல்லது cancel செய்யலாம்."
+      },
+      "delivery_escalated_admin": {
+        "title": "Stale delivery needs action",
+        "message": "{{food}}-க்கு volunteer இல்லை. Assign செய்யுங்கள்."
+      },
+      "self_pickup_selected": {
+        "title": "Beneficiary will pick up",
+        "message": "Beneficiary {{food}}-ஐ தாமாக pick up செய்வார்."
+      },
+      "claim_cancelled": {
+        "title": "Claim cancelled",
+        "message": "{{food}} claim cancel — மீண்டும் available."
+      },
+      "donor_will_deliver": {
+        "title": "Donor will deliver",
+        "message": "Donor {{food}}-ஐ deliver செய்வார்."
+      },
+      "admin_assigned_task": {
+        "title": "Admin assigned delivery",
+        "message": "நீங்கள் {{food}} deliver செய்ய assign ஆனீர்கள்."
+      }
+    }
+  },
+  "deliveryTracking": {
+    "title": "Delivery Progress",
+    "deliveryStatus": "Delivery status",
+    "waitingForVolunteer": "இந்த delivery-ஐ ஏற்க volunteer-ஐ காத்திருக்கிறோம்.",
+    "escalatedWaiting": "Volunteer இல்லை — food waste தவிர்க்க கீழே option தேர்ந்தெடுக்கவும்.",
+    "volunteer": "Volunteer",
+    "notAssigned": "இன்னும் assign ஆகவில்லை",
+    "dropoffLocation": "Delivery address"
+  },
+  "escalation": {
+    "title": "Volunteer இல்லை",
+    "description": "இந்த delivery நீண்ட நேரம் காத்தது. Food waste தவிர்க்க ஒரு option தேர்வு செய்யுங்கள்.",
+    "selfPickup": "நானே pick up செய்வேன்",
+    "cancelClaim": "எனது claim cancel",
+    "donorDelivery": "நானே beneficiary-க்கு deliver செய்வேன்",
+    "confirmSelfPickup": "Donor location-லிருந்து நீங்களே pick up செய்வீர்களா?",
+    "confirmCancelClaim": "Claim cancel செய்யவா? Food மற்றவர்களுக்கு available ஆகும்.",
+    "confirmDonorDelivery": "Beneficiary-க்கு நீங்களே deliver செய்வீர்களா?",
+    "actionFailed": "Action complete ஆகவில்லை"
   },
   "sidebar": {
     "dashboard": "டாஷ்போர்டு",
@@ -134,14 +251,114 @@
     "valueTrust": "நம்பிக்கை & பாதுகாப்பு",
     "valueTrustDesc": "verified users மற்றும் transparent processes அனைவரையும் பாதுகாக்கின்றன.",
     "ctaTitle": "மாற்றம் செய்ய தயாரா?",
-    "ctaButton": "தொடங்குங்கள்"
+    "ctaButton": "தொடங்குங்கள்",
+    "imageAlt": "சமூக தோட்டம்",
+    "timelineTitle": "எங்கள் பயணம்",
+    "timeline1Year": "2024 தொடக்கம்",
+    "timeline1Label": "தளம் அறிமுகம்",
+    "timeline2Year": "2024",
+    "timeline2Label": "முதல் 100 உணவுகள்",
+    "timeline3Year": "2024 நடுப்பகுதி",
+    "timeline3Label": "தன்னார்வ வலையமைப்பு",
+    "timeline4Year": "2024 இறுதி",
+    "timeline4Label": "சமூக வளர்ச்சி",
+    "timeline5Year": "2025",
+    "timeline5Label": "விரிவாக்கப்பட்ட அடைவு",
+    "timelineLatestYear": "இன்று",
+    "timelineLatestLabel": "நோக்கத்தில் சேருங்கள்",
+    "claimMeal": "தொடங்குங்கள்",
+    "footer": "© 2024 HungerHelp. ஒன்றாக சிறந்த எதிர்காலத்தை உருவாக்குவோம்."
+  },
+  "api": {
+    "adminAccessRequired": "நிர்வாக அணுகல் தேவை",
+    "userNotFound": "பயனர் கிடைக்கவில்லை",
+    "cannotModifyAdmin": "நிர்வாக கணக்குகளை மாற்ற முடியாது",
+    "noVerificationDocs": "பயனர் சரிபார்ப்பு ஆவணங்களை பupload செய்யவில்லை",
+    "cannotRejectAdmin": "நிர்வாக கணக்குகளை நிராகரிக்க முடியாது",
+    "postNotFound": "பதிவு கிடைக்கவில்லை",
+    "deliveryNotFound": "விநியோக பணி கிடைக்கவில்லை",
+    "loginFieldsRequired": "மின்னஞ்சல், கடவுச்சொல் மற்றும் பங்கு தேவை",
+    "invalidCredentials": "தவறான மின்னஞ்சல் அல்லது கடவுச்சொல்",
+    "noValidFields": "புதுப்பிக்க சரியான புலங்கள் இல்லை",
+    "emailExists": "மின்னஞ்சல் ஏற்கனவே உள்ளது",
+    "tokenMissing": "டoken இல்லை",
+    "tokenExpired": "டoken காலாவதியானது",
+    "invalidToken": "தவறான டoken",
+    "tokenInvalid": "டoken செல்லாது",
+    "onlyDonorsPost": "donors மட்டுமே உணவு பதிவு செய்ய முடியும்",
+    "missingFoodType": "தேவையான புலங்கள் காணவில்லை (food_type)",
+    "districtCityRequired": "மாவட்டம் மற்றும் நகரம் அவசியம்",
+    "locationRequired": "இடம் அவசியம்",
+    "onlyDonorsFulfill": "donors மட்டுமே கோரிக்கைகளை நிறைவேற்ற முடியும்",
+    "missingRequestIds": "request_id அல்லது beneficiary_id காணவில்லை",
+    "onlyBeneficiariesClaim": "beneficiary மட்டுமே உணவை claim செய்ய முடியும்",
+    "postNotFoundOrClaimed": "உணவு பதிவு கிடைக்கவில்லை அல்லது ஏற்கனவே claim செய்யப்பட்டது",
+    "onlyBeneficiariesCreateRequest": "beneficiary மட்டுமே உணவு கோரிக்கை உருவாக்க முடியும்",
+    "onlyBeneficiariesDeleteRequest": "beneficiary மட்டுமே கோரிக்கைகளை நீக்க முடியும்",
+    "requestNotFound": "கோரிக்கை கிடைக்கவில்லை",
+    "deleteOwnRequestsOnly": "உங்கள் சொந்த கோரிக்கைகளை மட்டுமே நீக்க முடியும்",
+    "deleteRequestFailed": "கோரிக்கையை நீக்க முடியவில்லை",
+    "onlyBeneficiariesUpdateRequest": "beneficiary மட்டுமே கோரிக்கைகளை புதுப்பிக்க முடியும்",
+    "editOwnRequestsOnly": "உங்கள் சொந்த கோரிக்கைகளை மட்டுமே திருத்த முடியும்",
+    "matchedRequestNotEditable": "match செய்யப்பட்ட கோரிக்கைகளை திருத்த முடியாது. My Claims ஐ பார்க்கவும்.",
+    "requestRemoved": "இந்த கோரிக்கை நீக்கப்பட்டது",
+    "nothingToUpdate": "புதுப்பிக்க எதுவும் இல்லை",
+    "requestAlreadyMatched": "donor ஏற்கனவே match செய்துள்ளார். My Claims ஐ பார்க்கவும்.",
+    "unsupportedRole": "ஆதரிக்கப்படாத பங்கு",
+    "adminNoUpload": "admin ஆவணங்கள் upload செய்ய முடியாது",
+    "noDocumentFile": "ஆவண கோப்பு வழங்கப்படவில்லை",
+    "invalidFile": "தவறான கோப்பு",
+    "allowedFormats": "அனுமதிக்கப்பட்ட வடிவங்கள்: PDF, JPG, JPEG, PNG",
+    "documentNotFound": "ஆவணம் கிடைக்கவில்லை",
+    "unauthorized": "அனுமதி இல்லை",
+    "onlyVolunteersViewTasks": "தன்னார்வலர்கள் மட்டுமே பணிகளை பார்க்க முடியும்",
+    "onlyVolunteersAccept": "தன்னார்வலர்கள் மட்டுமே பணிகளை ஏற்க முடியும்",
+    "acceptTaskFailed": "பணியை ஏற்க முடியவில்லை அல்லது ஏற்கனவே எடுக்கப்பட்டது",
+    "invalidStatus": "தவறான நிலை",
+    "unauthorizedOrTaskNotFound": "அனுமதி இல்லை அல்லது பணி கிடைக்கவில்லை",
+    "updateStatusFailed": "நிலையை புதுப்பிக்க முடியவில்லை",
+    "noDonationPermission": "இந்த தானத்தை பார்க்க அனுமதி இல்லை",
+    "invalidPostId": "தவறான பதிவு ID",
+    "missingStatus": "நிலை காணவில்லை",
+    "statusUpdated": "நிலை புதுப்பிக்கப்பட்டது",
+    "updateFailed": "புதுப்பிப்பு தோல்வி",
+    "missingUpdateData": "புதுப்பிப்பு தரவு காணவில்லை",
+    "loginSuccess": "வெற்றிகரமாக உள்நுழைந்தீர்கள்",
+    "profileUpdated": "சுயவிவரம் வெற்றிகரமாக புதுப்பிக்கப்பட்டது",
+    "userCreated": "பயனர் வெற்றிகரமாக உருவாக்கப்பட்டார்",
+    "requestCreated": "உணவு கோரிக்கை வெற்றிகரமாக உருவாக்கப்பட்டது",
+    "requestDeleted": "கோரிக்கை வெற்றிகரமாக நீக்கப்பட்டது",
+    "requestUpdated": "கோரிக்கை வெற்றிகரமாக புதுப்பிக்கப்பட்டது",
+    "foodPostCreated": "உணவு பதிவு உருவாக்கப்பட்டது",
+    "requestFulfilled": "கோரிக்கை நிறைவேற்றப்பட்டது. விநியோக பணி உருவாக்கப்பட்டது.",
+    "foodClaimed": "உணவு claim செய்யப்பட்டது. விநியோக பணி உருவாக்கப்பட்டது.",
+    "documentUploaded": "ஆவணம் வெற்றிகரமாக upload செய்யப்பட்டது",
+    "documentRemoved": "ஆவணம் வெற்றிகரமாக நீக்கப்பட்டது",
+    "userVerified": "பயனர் வெற்றிகரமாக சரிபார்க்கப்பட்டார்",
+    "userRejected": "பயனர் வெற்றிகரமாக நிராகரிக்கப்பட்டார்",
+    "postRejected": "உணவு பதிவு நிராகரிக்கப்பட்டு மறைக்கப்பட்டது",
+    "postApproved": "உணவு பதிவு அனுமதிக்கப்பட்டு வெளியிடப்பட்டது",
+    "taskAccepted": "பணி வெற்றிகரமாக ஏற்கப்பட்டது",
+    "resubmitUnderReview": "மீண்டும் சமர்ப்பித்த ஆவணங்கள் மதிப்பாய்வில் உள்ளன. admin மீண்டும் அனுமதிக்கும் வரை அணுகல் பூட்டப்பட்டுள்ளது.",
+    "accountRejectedLocked": "உங்கள் கணக்கு நிராகரிக்கப்பட்டது. Profile இல் ஆவணங்களை மீண்டும் upload செய்யுங்கள். admin மீண்டும் அனுமதிக்கும் வரை அணுகல் பூட்டப்பட்டுள்ளது.",
+    "statusMustBeOneOf": "நிலை இவற்றில் ஒன்றாக இருக்க வேண்டும்: {{list}}",
+    "wrongRoleLogin": "இந்த கணக்கு {{registered}} ஆக பதிவு செய்யப்பட்டுள்ளது, {{attempted}} அல்ல",
+    "fieldRequired": "{{field}} அவசியம்",
+    "fulfillRequestFailed": "கோரிக்கையை நிறைவேற்ற முடியவில்லை",
+    "claimFoodFailed": "உணவை claim செய்ய முடியவில்லை",
+    "deliveryUpdated": "விநியோகம் {{status}} ஆக புதுப்பிக்கப்பட்டது",
+    "statusUpdatedTo": "நிலை {{status}} ஆக புதுப்பிக்கப்பட்டது",
+    "networkError": "பிணைய பிழை. உங்கள் இணைப்பை சரிபார்க்கவும்."
   },
   "profile": {
     "editProfile": "சுயவிவரத்தைத் திருத்து",
     "saveChanges": "மாற்றங்களைச் சேமி",
     "saving": "சேமிக்கிறது...",
     "address": "முகவரி",
-    "languagePreference": "மொழி விருப்பம்"
+    "languagePreference": "மொழி விருப்பம்",
+    "cityRequired": "உங்கள் நகரத்தை உள்ளிடவும்.",
+    "updateSuccess": "சுயவிவரம் வெற்றிகரமாக புதுப்பிக்கப்பட்டது",
+    "updateFailed": "சுயவிவரத்தை புதுப்பிக்க முடியவில்லை"
   },
   "admin": {
     "dashboardTitle": "நிர்வாக டாஷ்போர்டு",
@@ -260,6 +477,13 @@
     "volunteerLabel": "தன்னார்வலர்: {{name}}",
     "pickedUpBtn": "எடுக்கப்பட்டது",
     "markDelivered": "வழங்கப்பட்டதாக குறி",
+    "needsAttention": "Needs attention",
+    "assignVolunteer": "Assign volunteer",
+    "selectVolunteer": "Select volunteer",
+    "selectVolunteerFirst": "Volunteer select செய்யுங்கள்",
+    "assignBtn": "Assign",
+    "confirmAssignVolunteer": "இந்த volunteer-ஐ assign செய்யவா?",
+    "assignVolunteerFailed": "Assign failed",
     "notSpecified": "குறிப்பிடப்படவில்லை",
     "requestsTitle": "உணவு கோரிக்கை நிர்வாகம்",
     "requestsSubtitle": "தேவையுள்ள பயனாளிகளின் உணவு கோரிக்கைகளை மதிப்பாய்வு செய்து ஒருங்கிணைக்கவும்.",
@@ -808,6 +1032,9 @@
       "updating": "புதுப்பிக்கிறது...",
       "markPickedUp": "எடுக்கப்பட்டதாகக் குறி",
       "markDelivered": "வழங்கப்பட்டதாகக் குறி",
+      "releaseTask": "Release Task",
+      "releaseConfirm": "இந்த task-ஐ release செய்யவா? மற்ற volunteers-க்கு open pool-ல் திரும்பும்.",
+      "releaseFailed": "Task release செய்ய முடியவில்லை",
       "noDeliveries": "இன்னும் வழங்கல்கள் இல்லை",
       "emptyHint": "உங்கள் சமூகத்திற்கு உதவ கிடைக்கும் பணிகளிலிருந்து ஒரு பணியை ஏற்றுக்கொள்ளுங்கள்.",
       "activeDeliveries": "செயலில் உள்ள வழங்கல்கள் ({{count}})",

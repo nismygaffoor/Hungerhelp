@@ -2,9 +2,17 @@ from flask import Blueprint, request, jsonify
 from models.delivery import DeliveryTask
 from models.food_post import FoodPost
 from models.claim import Claim
+from models.user import User
 from middleware.auth_middleware import token_required
 from bson import ObjectId
 from datetime import datetime, timedelta
+from utils.notifications import (
+    notify_volunteer_assigned,
+    notify_food_picked_up,
+    notify_food_delivered,
+    notify_task_released,
+    notify_new_delivery_task,
+)
 
 delivery_bp = Blueprint('delivery', __name__)
 
@@ -50,10 +58,22 @@ def _sync_claim_status(post_id, status):
         {"$set": {"status": status}}
     )
 
+def _parties_for_task(task):
+    post = FoodPost.collection.find_one({"_id": ObjectId(task['post_id'])}) if task.get('post_id') else None
+    if not post:
+        return None, None, None
+    donor_id = str(post.get('donor_id', ''))
+    beneficiary_id = str(post.get('claimed_by', '')) if post.get('claimed_by') else None
+    food_type = post.get('food_type')
+    return donor_id, beneficiary_id, food_type
+
 @delivery_bp.route('/available', methods=['GET'])
 @token_required
 def get_available_tasks():
     """Get all delivery tasks that are Pending (no volunteer)"""
+    from services.delivery_escalation import maybe_process_escalations
+    maybe_process_escalations()
+
     current_user = request.user_data
     if str(current_user['role']).lower() != 'volunteer':
         return jsonify({"message": "Only volunteers can see delivery tasks"}), 403
@@ -166,8 +186,50 @@ def accept_task(task_id):
                 {"$set": {"status": "Pending Pickup"}}
             )
             _sync_claim_status(task['post_id'], "Pending Pickup")
+            donor_id, beneficiary_id, food_type = _parties_for_task(task)
+            volunteer = User.collection.find_one(
+                {"_id": ObjectId(current_user['user_id'])},
+                {"name": 1},
+            ) if current_user.get('user_id') else None
+            notify_volunteer_assigned(
+                donor_id,
+                beneficiary_id,
+                volunteer.get('name') if volunteer else current_user.get('name'),
+                food_type,
+            )
         return jsonify({"message": "Task accepted successfully"}), 200
     return jsonify({"message": "Failed to accept task or task already taken"}), 400
+
+@delivery_bp.route('/<task_id>/release', methods=['POST'])
+@token_required
+def release_task(task_id):
+    """Volunteer releases an assigned task back to the open pool."""
+    current_user = request.user_data
+    if str(current_user['role']).lower() != 'volunteer':
+        return jsonify({"message": "Only volunteers can release tasks"}), 403
+
+    task = DeliveryTask.collection.find_one({"_id": ObjectId(task_id)})
+    if not task:
+        return jsonify({"message": "Task not found"}), 404
+
+    success = DeliveryTask.release_volunteer(task_id, current_user['user_id'])
+    if not success:
+        return jsonify({
+            "message": "Cannot release this task. It may already be picked up or not assigned to you."
+        }), 400
+
+    if task.get('post_id'):
+        FoodPost.collection.update_one(
+            {"_id": ObjectId(task['post_id'])},
+            {"$set": {"status": "Claimed"}},
+        )
+        _sync_claim_status(task['post_id'], "Claimed")
+
+    donor_id, beneficiary_id, food_type = _parties_for_task(task)
+    notify_task_released(donor_id, beneficiary_id, food_type)
+    notify_new_delivery_task(food_type)
+
+    return jsonify({"message": "Task released. It is available for other volunteers."}), 200
 
 @delivery_bp.route('/my-tasks', methods=['GET'])
 @token_required
@@ -211,5 +273,15 @@ def update_task_status(task_id):
             {"$set": {"status": mapped_status}}
         )
         _sync_claim_status(task['post_id'], mapped_status)
+        donor_id, beneficiary_id, food_type = _parties_for_task(task)
+        volunteer = User.collection.find_one(
+            {"_id": ObjectId(current_user['user_id'])},
+            {"name": 1},
+        )
+        volunteer_name = volunteer.get('name') if volunteer else 'Volunteer'
+        if new_status == 'PickedUp':
+            notify_food_picked_up(donor_id, beneficiary_id, volunteer_name, food_type)
+        elif new_status == 'Delivered':
+            notify_food_delivered(donor_id, beneficiary_id, food_type)
         return jsonify({"message": f"Status updated to {new_status}"}), 200
     return jsonify({"message": "Failed to update status"}), 400

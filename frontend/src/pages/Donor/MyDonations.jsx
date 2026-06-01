@@ -13,11 +13,13 @@ import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
 import EditDonationModal from './EditDonationModal';
 import { translateStatus, translateCategory, FOOD_CATEGORIES } from '../../i18n/donorVolunteerI18n';
+import { useDialog } from '../../context/DialogContext';
 
 const STATUS_OPTIONS = ['Available', 'Claimed', 'Pending Pickup', 'In Transit', 'Delivered', 'Expired'];
 
 const MyDonations = () => {
     const { t } = useTranslation();
+    const { toast, confirmDialog } = useDialog();
     const navigate = useNavigate();
     const [myPosts, setMyPosts] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -69,12 +71,13 @@ const MyDonations = () => {
     });
 
     const handleDelete = async (id) => {
-        if (!confirm(t('donor.myDonations.deleteConfirm'))) return;
+        const ok = await confirmDialog(t('donor.myDonations.deleteConfirm'), { variant: 'danger' });
+        if (!ok) return;
         try {
             await api.delete(`/food/${id}`);
             fetchMyPosts();
         } catch (err) {
-            alert(t('donor.myDonations.deleteFailed'));
+            toast.error(t('donor.myDonations.deleteFailed'));
         }
     };
 
