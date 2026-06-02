@@ -363,6 +363,22 @@ def approve_post(post_id):
             print(f"SMS food alert skipped: {exc}")
     return jsonify({"message": "Food post approved and published"}), 200
 
+@admin_bp.route('/requests', methods=['GET'])
+@token_required
+def get_all_requests():
+    current_user = request.user_data
+    if current_user['role'] != 'Admin':
+        return jsonify({"error": "Admin access required"}), 403
+
+    status_filter = request.args.get('status', 'All')
+    requests = FoodRequest.get_all_for_admin(status_filter)
+    summary = {
+        "total": len(requests) if status_filter == "All" else FoodRequest.collection.count_documents({"status": {"$ne": "Deleted"}}),
+        "active": FoodRequest.collection.count_documents({"status": "Active"}),
+        "fulfilled": FoodRequest.collection.count_documents({"status": "Fulfilled"}),
+    }
+    return jsonify({"requests": requests, "summary": summary}), 200
+
 @admin_bp.route('/deliveries', methods=['GET'])
 @token_required
 def get_all_deliveries():

@@ -63,6 +63,36 @@ class FoodRequest:
         return requests
 
     @staticmethod
+    def get_all_for_admin(status_filter=None):
+        from models.user import User
+
+        query = {"status": {"$ne": "Deleted"}}
+        if status_filter and status_filter not in ("All", ""):
+            query["status"] = status_filter
+
+        cursor = FoodRequest.collection.find(query).sort("created_at", -1)
+        requests = []
+        for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            doc["beneficiary_id"] = str(doc.get("beneficiary_id", ""))
+            created_at = doc.get("created_at")
+            if hasattr(created_at, "isoformat"):
+                doc["created_at"] = created_at.isoformat()
+
+            beneficiary = User.collection.find_one(
+                {"_id": ObjectId(doc["beneficiary_id"])},
+                {"name": 1, "beneficiaryType": 1, "contact": 1, "district": 1},
+            )
+            if beneficiary:
+                doc["beneficiary_name"] = beneficiary.get("name", "Beneficiary")
+                doc["beneficiary_type"] = beneficiary.get("beneficiaryType", "Individual")
+                doc["beneficiary_contact"] = beneficiary.get("contact", "")
+                doc["beneficiary_district"] = beneficiary.get("district", "")
+
+            requests.append(doc)
+        return requests
+
+    @staticmethod
     def delete(request_id, user_id):
         try:
             oid = ObjectId(request_id)
