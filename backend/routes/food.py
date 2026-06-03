@@ -117,30 +117,13 @@ def get_posts():
     if not beneficiary:
         return jsonify([]), 200
     
-    beneficiary_type = beneficiary.get('beneficiaryType', '').strip()
-    beneficiary_name = beneficiary.get('name', '').strip()
-    
-    # Filter posts based on targeting rules
-    filtered_posts = []
-    for post in all_posts:
-        dest_type = post.get('destination_type', '').strip()
-        dest_name = post.get('destination_name', '').strip()
-        
-        # Rule 1: No targeting (no type specified) → Show to everyone
-        if not dest_type:
-            filtered_posts.append(post)
-            continue
-        
-        # Rule 2: Specific name targeting → Show ONLY if exact name match
-        if dest_name:
-            if dest_name.lower() == beneficiary_name.lower():
-                filtered_posts.append(post)
-            # If name is specified but doesn't match, don't show (even if type matches)
-            continue
-        
-        # Rule 3: Type targeting only (no name) → Show if type matches
-        if dest_type.lower() == beneficiary_type.lower():
-            filtered_posts.append(post)
+    from services.food_claim import post_matches_beneficiary
+
+    # Use the same rules as POST /food/<id>/claim so listed posts are claimable
+    filtered_posts = [
+        post for post in all_posts
+        if post_matches_beneficiary(post, beneficiary)
+    ]
     
     # Enrich with donor names
     from models.user import User

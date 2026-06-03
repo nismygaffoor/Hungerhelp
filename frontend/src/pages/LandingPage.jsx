@@ -1,31 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Leaf } from 'lucide-react';
-import LanguageSwitcher from '../components/LanguageSwitcher';
+import PublicNav from '../components/PublicNav';
 
 const LandingPage = () => {
     const { t } = useTranslation();
 
     return (
         <div className="font-sans bg-white text-gray-800">
-            <nav className="flex justify-between items-center p-2 px-8 max-w-8xl mx-auto bg-white">
-                <div className="text-2xl font-bold flex items-center gap-2">
-                    <Leaf className="text-green-600" size={28} />
-                    <span className="text-green-700 tracking-tight">Hunger<span className="text-gray-500 font-light">Help</span></span>
-                </div>
-                <div className="hidden md:flex gap-8 font-extrabold text-lg">
-                    <Link to="/" className="hover:text-green-600">{t('nav.home')}</Link>
-                    <Link to="/about" className="hover:text-green-600">{t('nav.about')}</Link>
-                    <a href="#" className="hover:text-green-600">{t('nav.howItWorks')}</a>
-                    <a href="#" className="hover:text-green-600">{t('nav.contact')}</a>
-                </div>
-                <div className="flex items-center gap-3">
-                    <LanguageSwitcher />
-                    <Link to="/login" className="bg-green-700 text-white px-6 py-2 rounded shadow hover:bg-green-800 transition">
-                        {t('nav.login')}
-                    </Link>
-                </div>
-            </nav>
+            <PublicNav />
 
             <div className="relative overflow-hidden min-h-[100px] flex flex-col items-center justify-center">
                 <div
@@ -55,19 +37,19 @@ const LandingPage = () => {
                 <div className="bg-orange-400 rounded-lg shadow-xl p-8 flex flex-col md:flex-row justify-between items-center text-center text-gray-900">
                     <div className="mb-6 md:mb-0">
                         <p className="text-sm font-bold opacity-60 uppercase mb-1">{t('landing.impact')}</p>
-                        <p className="text-4xl font-bold">15,400</p>
+                        <p className="text-4xl font-bold">40</p>
                         <p className="text-sm">{t('landing.mealsSaved')}</p>
                     </div>
                     <div className="w-px h-16 bg-black opacity-10 hidden md:block" />
                     <div className="mb-6 md:mb-0">
                         <p className="text-sm font-bold opacity-60 uppercase mb-1">{t('landing.community')}</p>
-                        <p className="text-4xl font-bold">350</p>
+                        <p className="text-4xl font-bold">10</p>
                         <p className="text-sm">{t('landing.registeredDonors')}</p>
                     </div>
                     <div className="w-px h-16 bg-black opacity-10 hidden md:block" />
                     <div>
                         <p className="text-sm font-bold opacity-60 uppercase mb-1">{t('landing.reach')}</p>
-                        <p className="text-4xl font-bold">50</p>
+                        <p className="text-4xl font-bold">5</p>
                         <p className="text-sm">{t('landing.communitiesFed')}</p>
                     </div>
                 </div>
@@ -108,6 +90,12 @@ const LandingPage = () => {
                         <p className="text-gray-600 max-w-xs">{t('landing.step3Desc')}</p>
                     </div>
                 </div>
+                <Link
+                    to="/how-it-works"
+                    className="inline-block mt-12 text-green-700 font-bold hover:underline"
+                >
+                    {t('landing.learnMore')} →
+                </Link>
             </div>
         </div>
     );

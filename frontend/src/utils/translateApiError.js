@@ -22,6 +22,9 @@ const EXACT_MAP = {
     'Missing request_id or beneficiary_id': 'api.missingRequestIds',
     'Only beneficiaries can claim food': 'api.onlyBeneficiariesClaim',
     'Food post not found or already claimed': 'api.postNotFoundOrClaimed',
+    'Food post not found or already claimed.': 'api.postNotFoundOrClaimed',
+    'Your account must be verified before claiming.': 'api.mustVerifyBeforeClaim',
+    'This donation is not available for your profile.': 'api.donationNotForProfile',
     'Only beneficiaries can create food requests': 'api.onlyBeneficiariesCreateRequest',
     'Only beneficiaries can delete requests': 'api.onlyBeneficiariesDeleteRequest',
     'Request not found': 'api.requestNotFound',
@@ -71,6 +74,11 @@ const EXACT_MAP = {
     'Task accepted successfully': 'api.taskAccepted',
     'Your re-submitted documents are under review. Platform access stays locked until an admin re-approves your account.': 'api.resubmitUnderReview',
     'Your account was rejected. Please re-upload verification documents in your profile. Food and claim features stay locked until an admin re-approves you.': 'api.accountRejectedLocked',
+    'Name, email, and message are required': 'api.contactFieldsRequired',
+    'Please enter a valid email address': 'api.contactInvalidEmail',
+    'Contact message submitted successfully': 'api.contactSubmitted',
+    'Contact message not found': 'api.contactNotFound',
+    'Contact message status updated': 'api.contactStatusUpdatedMsg',
 };
 
 const PATTERNS = [

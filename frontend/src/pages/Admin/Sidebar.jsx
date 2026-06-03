@@ -16,7 +16,8 @@ import {
     Gauge,
     Timer,
     Menu,
-    X
+    X,
+    Mail,
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed }) => {
@@ -34,6 +35,7 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed, setIsCollapsed }) => {
         { id: 'deliveries', labelKey: 'sidebar.admin.deliveries', icon: <Gauge size={22} />, path: '/admin/deliveries' },
         { id: 'stats', labelKey: 'sidebar.admin.stats', icon: <BarChart3 size={22} />, path: '/admin/stats' },
         { id: 'feedback', labelKey: 'sidebar.admin.feedback', icon: <MessageSquare size={22} />, path: '/admin/feedback' },
+        { id: 'contacts', labelKey: 'sidebar.admin.contacts', icon: <Mail size={22} />, path: '/admin/contacts' },
     ];
 
     const handleLogout = () => {

@@ -59,6 +59,7 @@ from routes.requests import requests_bp
 from routes.feedback import feedback_bp
 from routes.notifications import notifications_bp
 from routes.sms import sms_bp
+from routes.contact import contact_bp
 
 @app.before_request
 def handle_cors_preflight():
@@ -87,6 +88,7 @@ app.register_blueprint(requests_bp, url_prefix='/requests')
 app.register_blueprint(feedback_bp, url_prefix='/feedback')
 app.register_blueprint(notifications_bp, url_prefix='/notifications')
 app.register_blueprint(sms_bp, url_prefix='/sms')
+app.register_blueprint(contact_bp, url_prefix='/contact')
 
 @app.before_request
 def run_scheduled_recurring_check():
@@ -116,6 +118,7 @@ def home():
             "request": "/request (GET, POST)",
             "admin": "/admin (STATS, VERIFY)",
             "feedback": "/feedback (POST)",
+            "contact": "/contact (POST, GET admin)",
             "sms": "/sms/incoming (Twilio webhook)"
         }
     })

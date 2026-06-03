@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Leaf, Users, Heart } from 'lucide-react';
-import LanguageSwitcher from '../components/LanguageSwitcher';
+import PublicNav from '../components/PublicNav';
 
 const About = () => {
     const { t } = useTranslation();
@@ -16,24 +16,7 @@ const About = () => {
 
     return (
         <div className="font-sans bg-white text-gray-800 min-h-screen">
-            <nav className="flex justify-between items-center p-2 px-8 max-w-8xl mx-auto bg-white border-b border-gray-50">
-                <div className="text-2xl font-bold flex items-center gap-2">
-                    <Leaf className="text-green-600" size={28} />
-                    <span className="text-green-700 tracking-tight">Hunger<span className="text-gray-500 font-light">Help</span></span>
-                </div>
-                <div className="hidden md:flex gap-8 font-extrabold text-sm uppercase tracking-wider text-gray-900">
-                    <Link to="/" className="hover:text-green-600 transition-colors">{t('nav.home')}</Link>
-                    <Link to="/about" className="text-green-600">{t('nav.about')}</Link>
-                    <a href="#" className="hover:text-green-600 transition-colors">{t('nav.howItWorks')}</a>
-                    <a href="#" className="hover:text-green-600 transition-colors">{t('nav.contact')}</a>
-                </div>
-                <div className="flex items-center gap-3">
-                    <LanguageSwitcher />
-                    <Link to="/login" className="bg-[#41834F] text-white px-8 py-2 rounded-lg font-bold shadow-md hover:bg-green-800 transition">
-                        {t('nav.login')}
-                    </Link>
-                </div>
-            </nav>
+            <PublicNav />
 
             <div className="max-w-7xl mx-auto px-6 py-16">
                 <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-16 tracking-tight">{t('about.missionTitle')}</h1>

@@ -89,7 +89,11 @@ const ClaimFoods = () => {
             setFoodPosts(foodPosts.filter(p => p._id !== postId));
         } catch (err) {
             console.error("Claim error:", err);
-            toast.error(err.response?.data?.message || t('beneficiary.claimFailed'));
+            toast.error(
+                err.response?.data?.error
+                || err.response?.data?.message
+                || t('beneficiary.claimFailed')
+            );
         }
     };
 

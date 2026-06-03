@@ -7,6 +7,8 @@ import AdminLogin from './pages/Admin/AdminLogin';
 import Register from './pages/Register';
 import LandingPage from './pages/LandingPage';
 import About from './pages/About';
+import HowItWorks from './pages/HowItWorks';
+import Contact from './pages/Contact';
 import { isAccessLocked, PROFILE_BY_ROLE } from './utils/verificationAccess';
 
 // Protected Route Component
@@ -78,6 +80,7 @@ import AdminRequests from './pages/Admin/Requests';
 import AdminDeliveries from './pages/Admin/Deliveries';
 import AdminStats from './pages/Admin/Stats';
 import AdminFeedback from './pages/Admin/Feedback';
+import AdminContacts from './pages/Admin/Contacts';
 
 // Role-Based Home Redirect
 const Home = () => {
@@ -109,6 +112,8 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<LandingPage />} />
           <Route path="/about" element={<About />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/contact" element={<Contact />} />
 
           {/* Core Redirect */}
           <Route path="/dashboard" element={<ProtectedRoute><Home /></ProtectedRoute>} />
@@ -149,6 +154,7 @@ function App() {
           <Route path="/admin/deliveries" element={<ProtectedRoute allowedRoles={['Admin']}><AdminDeliveries /></ProtectedRoute>} />
           <Route path="/admin/stats" element={<ProtectedRoute allowedRoles={['Admin']}><AdminStats /></ProtectedRoute>} />
           <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={['Admin']}><AdminFeedback /></ProtectedRoute>} />
+          <Route path="/admin/contacts" element={<ProtectedRoute allowedRoles={['Admin']}><AdminContacts /></ProtectedRoute>} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" />} />
