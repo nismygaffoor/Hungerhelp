@@ -136,6 +136,10 @@
       "admin_assigned_task": {
         "title": "Admin assigned delivery",
         "message": "நீங்கள் {{food}} deliver செய்ய assign ஆனீர்கள்."
+      },
+      "new_food_available": {
+        "title": "புதிய உணவு கிடைக்கிறது",
+        "message": "{{donor}} {{city}}-இல் {{food}} post செய்துள்ளார். பார்க்க claim செய்ய தட்டவும்."
       }
     }
   },
@@ -362,9 +366,16 @@
   },
   "admin": {
     "dashboardTitle": "நிர்வாக டாஷ்போர்டு",
-    "dashboardSubtitle": "தள மேற்பார்வை மற்றும் பயனர் நிர்வாகம்.",
-    "statsTitle": "அறிக்கைகள் & பகுப்பாய்வு",
-    "statsSubtitle": "தள தாக்கம், தான போக்குகள் மற்றும் விநியோக செயல்திறன்.",
+    "dashboardSubtitle": "இன்றைய கண overview — கவனம் தேவைப்படும் விஷயங்கள் மற்றும் நேரடி விநியோக செயல்பாடு.",
+    "dashboardVerifyHint": "ஆவண மதிப்பாய்வுக்காக காத்திருக்கும் பயனர்கள்",
+    "dashboardRequestsHint": "திறந்த beneficiary உணவு கோரிக்கைகள்",
+    "dashboardDeliveriesHint": "தvolunteer காத்திருக்கும் வ deliveries",
+    "dashboardEscalatedHint": "admin action தேவைப்படும் deliveries",
+    "dashboardAnalyticsHint": "Charts, trends மற்றும் CSV reports-க்கு செல்ல",
+    "unassignedDeliveries": "Assign செய்யப்படாத Deliveries",
+    "escalatedDeliveries": "Escalated Deliveries",
+    "statsTitle": "Analytics & Reports",
+    "statsSubtitle": "Platform trends, community impact மற்றும் downloadable reports.",
     "totalUsers": "மொத்த பயனர்கள்",
     "foodPosts": "உணவு பதிவுகள்",
     "deliveries": "வ deliveries",
@@ -488,6 +499,11 @@
     "requestsTitle": "உணவு கோரிக்கை நிர்வாகம்",
     "requestsSubtitle": "தேவையுள்ள பயனாளிகளின் உணவு கோரிக்கைகளை மதிப்பாய்வு செய்து ஒருங்கிணைக்கவும்.",
     "communityRequests": "சமூக கோரிக்கைகள்",
+    "allStatuses": "அனைத்து நிலைகள்",
+    "noRequestsFound": "உணவு கோரிக்கைகள் இல்லை",
+    "searchRequestsPlaceholder": "பயனாளி, உணவு அல்லது விளக்கம் தேடு…",
+    "requestBeneficiary": "பயனாளி",
+    "loadRequestsFailed": "உணவு கோரிக்கைகளை ஏற்ற முடியவில்லை. backend-ஐ restart செய்து மீண்டும் முயற்சிக்கவும்.",
     "verifyTitle": "சரிபார்ப்பு கோரிக்கைகள்",
     "verifySubtitle": "புதிய உறுப்பினர்களின் சரிபார்ப்பு கோரிக்கைகளை மதிப்பாய்வு செய்து அங்கீகரிக்கவும்.",
     "pendingVerificationsTitle": "நிலுவையில் உள்ள சரிபார்ப்புகள்",

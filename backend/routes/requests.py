@@ -35,8 +35,19 @@ def create_request():
 @requests_bp.route('/', methods=['GET'])
 @token_required
 def get_all_active_requests():
-    """Get all active food requests (for donors/admin to see)"""
+    """Get food requests. Donors see active only; admins see all with summary."""
+    current_user = request.user_data
     try:
+        if current_user.get('role') == 'Admin':
+            status_filter = request.args.get('status', 'All')
+            requests_list = FoodRequest.get_all_for_admin(status_filter)
+            summary = {
+                "total": FoodRequest.collection.count_documents({"status": {"$ne": "Deleted"}}),
+                "active": FoodRequest.collection.count_documents({"status": "Active"}),
+                "fulfilled": FoodRequest.collection.count_documents({"status": "Fulfilled"}),
+            }
+            return jsonify({"requests": requests_list, "summary": summary}), 200
+
         requests = FoodRequest.get_all_active()
         return jsonify(requests), 200
     except Exception as e:

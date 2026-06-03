@@ -136,6 +136,10 @@
       "admin_assigned_task": {
         "title": "Admin assigned you a delivery",
         "message": "You were assigned to deliver {{food}}."
+      },
+      "new_food_available": {
+        "title": "New food available",
+        "message": "{{donor}} posted {{food}} in {{city}}. Tap to view and claim."
       }
     }
   },
@@ -362,9 +366,16 @@
   },
   "admin": {
     "dashboardTitle": "Admin Dashboard",
-    "dashboardSubtitle": "Platform oversight and user management.",
-    "statsTitle": "Reports & Analytics",
-    "statsSubtitle": "Platform impact, donation trends, and delivery performance.",
+    "dashboardSubtitle": "Today's overview — items that need your attention and live delivery activity.",
+    "dashboardVerifyHint": "Users waiting for document review",
+    "dashboardRequestsHint": "Open beneficiary food requests",
+    "dashboardDeliveriesHint": "Deliveries waiting for a volunteer",
+    "dashboardEscalatedHint": "Deliveries that need admin action",
+    "dashboardAnalyticsHint": "For charts, trends, and CSV reports go to",
+    "unassignedDeliveries": "Unassigned Deliveries",
+    "escalatedDeliveries": "Escalated Deliveries",
+    "statsTitle": "Analytics & Reports",
+    "statsSubtitle": "Platform trends, community impact, and downloadable reports.",
     "totalUsers": "Total Users",
     "foodPosts": "Food Posts",
     "deliveries": "Deliveries",
@@ -488,6 +499,11 @@
     "requestsTitle": "Food Request Management",
     "requestsSubtitle": "Review and coordinate food requests from beneficiaries in need.",
     "communityRequests": "Community Requests",
+    "allStatuses": "All statuses",
+    "noRequestsFound": "No food requests found",
+    "searchRequestsPlaceholder": "Search beneficiary, food, or description…",
+    "requestBeneficiary": "Beneficiary",
+    "loadRequestsFailed": "Failed to load food requests. Restart the backend and try again.",
     "verifyTitle": "Verification Requests",
     "verifySubtitle": "Review and approve verification requests for new platform members.",
     "pendingVerificationsTitle": "Pending Verifications",

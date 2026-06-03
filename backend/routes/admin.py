@@ -357,10 +357,10 @@ def approve_post(post_id):
         notify_post_approved(str(post['donor_id']), post.get('food_type'))
     if new_status == "Available" and not post.get("is_recurring"):
         try:
-            from services.sms_claim import notify_beneficiaries_new_food
-            notify_beneficiaries_new_food(post_id)
+            from utils.notifications import notify_beneficiaries_new_food_available
+            notify_beneficiaries_new_food_available(post_id)
         except Exception as exc:
-            print(f"SMS food alert skipped: {exc}")
+            print(f"Food availability notifications skipped: {exc}")
     return jsonify({"message": "Food post approved and published"}), 200
 
 @admin_bp.route('/requests', methods=['GET'])

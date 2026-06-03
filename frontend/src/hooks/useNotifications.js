@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 
-const POLL_INTERVAL_MS = 30000;
+const POLL_INTERVAL_MS = 15000;
 
 export const useNotifications = () => {
     const { user } = useAuth();
@@ -37,7 +37,12 @@ export const useNotifications = () => {
         if (!user) return undefined;
 
         const intervalId = window.setInterval(fetchNotifications, POLL_INTERVAL_MS);
-        return () => window.clearInterval(intervalId);
+        const onFocus = () => fetchNotifications();
+        window.addEventListener('focus', onFocus);
+        return () => {
+            window.clearInterval(intervalId);
+            window.removeEventListener('focus', onFocus);
+        };
     }, [user, fetchNotifications]);
 
     const markRead = async (notificationId) => {

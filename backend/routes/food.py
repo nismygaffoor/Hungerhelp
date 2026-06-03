@@ -84,10 +84,10 @@ def create_post():
 
     if not data.get("is_recurring") and data.get("status", "Available") == "Available":
         try:
-            from services.sms_claim import notify_beneficiaries_new_food
-            notify_beneficiaries_new_food(post_id)
+            from utils.notifications import notify_beneficiaries_new_food_available
+            notify_beneficiaries_new_food_available(post_id)
         except Exception as exc:
-            print(f"SMS food alert skipped: {exc}")
+            print(f"Food availability notifications skipped: {exc}")
 
     return jsonify({"message": "Food post created", "post_id": post_id}), 201
 

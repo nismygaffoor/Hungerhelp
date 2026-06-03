@@ -3,18 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { translateStatus } from '../../i18n/donorVolunteerI18n';
-import { downloadAnalyticsReport } from '../../utils/analyticsReport';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
 import {
     Users,
     Package,
     Truck,
-    Download,
     Loader2,
     ShieldAlert,
     Clock,
     CheckCircle,
+    FileText,
+    AlertTriangle,
+    ArrowRight,
 } from 'lucide-react';
 
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1488459711635-de89ea219d53?w=100&h=100&fit=crop';
@@ -26,72 +27,6 @@ const STATUS_STYLES = {
     Delivered: 'text-green-600',
     Cancelled: 'text-red-600',
 };
-
-const categoryColors = ['#F97316', '#10B981', '#3B82F6', '#FACC15', '#EF4444', '#8B5CF6', '#06B6D4', '#9CA3AF'];
-
-const BarChart = ({ labels, counts, color = 'bg-[#86EFAC]', emptyLabel }) => {
-    const max = Math.max(...counts, 1);
-    if (!counts.length || counts.every((c) => c === 0)) {
-        return <p className="text-sm text-gray-400 text-center py-12">{emptyLabel}</p>;
-    }
-    return (
-        <div className="h-44 flex items-end justify-between gap-2">
-            {counts.map((count, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                    <span className="text-[10px] font-bold text-gray-500">{count}</span>
-                    <div className="w-full h-32 bg-[#F0FDF4] rounded-t-lg flex items-end overflow-hidden">
-                        <div
-                            style={{ height: `${(count / max) * 100}%` }}
-                            className={`w-full ${color} rounded-t-lg transition-all hover:opacity-80`}
-                        />
-                    </div>
-                    <span className="text-[10px] text-gray-400 font-bold">{labels[i] || ''}</span>
-                </div>
-            ))}
-        </div>
-    );
-};
-
-const DualBarChart = ({ labels, primary, secondary, emptyLabel }) => {
-    const max = Math.max(...primary, ...secondary, 1);
-    if (!labels.length || (primary.every((c) => c === 0) && secondary.every((c) => c === 0))) {
-        return <p className="text-sm text-gray-400 text-center py-12">{emptyLabel}</p>;
-    }
-    return (
-        <div className="h-44 flex items-end justify-between gap-2">
-            {labels.map((label, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                    <div className="flex gap-0.5 h-32 items-end w-full justify-center">
-                        <div
-                            style={{ height: `${((primary[i] || 0) / max) * 100}%` }}
-                            className="w-2.5 bg-[#1E5144] rounded-t-sm"
-                            title={`Claims: ${primary[i] || 0}`}
-                        />
-                        <div
-                            style={{ height: `${((secondary[i] || 0) / max) * 100}%` }}
-                            className="w-2.5 bg-[#86EFAC] rounded-t-sm"
-                            title={`Deliveries: ${secondary[i] || 0}`}
-                        />
-                    </div>
-                    <span className="text-[10px] text-gray-400 font-bold">{label}</span>
-                </div>
-            ))}
-        </div>
-    );
-};
-
-const DonutSegment = ({ percent, offset, color }) => (
-    <circle
-        cx="18"
-        cy="18"
-        r="15.9"
-        fill="transparent"
-        stroke={color}
-        strokeWidth="4"
-        strokeDasharray={`${percent} 100`}
-        strokeDashoffset={offset}
-    />
-);
 
 const formatDate = (value, t) => {
     if (!value) return t('common.recently');
@@ -111,7 +46,7 @@ const Dashboard = () => {
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(true);
-    const [analytics, setAnalytics] = useState(null);
+    const [summary, setSummary] = useState(null);
     const [deliveries, setDeliveries] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -125,8 +60,8 @@ const Dashboard = () => {
                     api.get('/admin/analytics'),
                     api.get('/admin/deliveries'),
                 ]);
-                setAnalytics(analyticsRes.data);
-                setDeliveries(deliveriesRes.data);
+                setSummary(analyticsRes.data?.summary || {});
+                setDeliveries(deliveriesRes.data || []);
             } catch (err) {
                 console.error('Failed to fetch admin dashboard:', err);
                 setError(err.response?.data?.error || t('admin.loadDashboardFailed'));
@@ -135,27 +70,53 @@ const Dashboard = () => {
             }
         };
         fetchDashboard();
-    }, []);
-
-    const summary = analytics?.summary || {};
-    const categories = analytics?.food_categories || [];
-    const categoryTotal = categories.reduce((s, c) => s + c.count, 0) || 1;
-
-    let donutOffset = 0;
-    const donutSegments = categories.slice(0, 5).map((cat, i) => {
-        const percent = Math.round((cat.count / categoryTotal) * 100);
-        const seg = { percent, offset: -donutOffset, color: categoryColors[i % categoryColors.length] };
-        donutOffset += percent;
-        return seg;
-    });
+    }, [t]);
 
     const recentDeliveries = deliveries.slice(0, 5);
-    const upcomingPickups = deliveries.filter((d) => ['Assigned', 'PickedUp', 'Pending'].includes(d.status)).slice(0, 5);
+    const upcomingPickups = deliveries
+        .filter((d) => ['Assigned', 'PickedUp', 'Pending'].includes(d.status))
+        .slice(0, 5);
+    const escalatedCount = deliveries.filter((d) => d.delivery_escalated || d.escalation_stage === 'escalated').length;
+    const unassignedCount = deliveries.filter((d) => d.status === 'Pending' && !d.volunteer_id).length;
 
-    const handleDownload = () => {
-        if (!analytics) return;
-        downloadAnalyticsReport(analytics);
-    };
+    const actionItems = [
+        {
+            label: t('admin.pendingReview'),
+            value: summary?.pending_verifications ?? 0,
+            hint: t('admin.dashboardVerifyHint'),
+            icon: ShieldAlert,
+            bg: 'bg-amber-50',
+            color: 'text-amber-600',
+            path: '/admin/users',
+        },
+        {
+            label: t('admin.activeRequests'),
+            value: summary?.active_requests ?? 0,
+            hint: t('admin.dashboardRequestsHint'),
+            icon: FileText,
+            bg: 'bg-blue-50',
+            color: 'text-blue-600',
+            path: '/admin/requests',
+        },
+        {
+            label: t('admin.unassignedDeliveries'),
+            value: unassignedCount,
+            hint: t('admin.dashboardDeliveriesHint'),
+            icon: Truck,
+            bg: 'bg-orange-50',
+            color: 'text-orange-600',
+            path: '/admin/deliveries',
+        },
+        {
+            label: t('admin.escalatedDeliveries'),
+            value: escalatedCount,
+            hint: t('admin.dashboardEscalatedHint'),
+            icon: AlertTriangle,
+            bg: 'bg-red-50',
+            color: 'text-red-600',
+            path: '/admin/deliveries',
+        },
+    ];
 
     return (
         <div className="flex min-h-screen bg-white font-sans text-gray-800">
@@ -165,19 +126,9 @@ const Dashboard = () => {
                 <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
                 <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-                    <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
-                        <div>
-                            <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">{t('admin.dashboardTitle')}</h2>
-                            <p className="text-gray-500 text-sm font-medium mt-1">{t('admin.dashboardSubtitle')}</p>
-                        </div>
-                        <button
-                            onClick={handleDownload}
-                            disabled={!analytics}
-                            className="flex items-center gap-2 bg-[#1E5144] text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-[#163d33] disabled:opacity-50 transition-all"
-                        >
-                            <Download size={16} />
-                            {t('common.downloadCsvReport')}
-                        </button>
+                    <header className="mb-8">
+                        <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">{t('admin.dashboardTitle')}</h2>
+                        <p className="text-gray-500 text-sm font-medium mt-1">{t('admin.dashboardSubtitle')}</p>
                     </header>
 
                     {error && (
@@ -190,129 +141,52 @@ const Dashboard = () => {
                         <div className="flex justify-center py-24">
                             <Loader2 className="animate-spin text-[#1E5144]" size={40} />
                         </div>
-                    ) : analytics && (
+                    ) : (
                         <>
+                            <section className="mb-8">
+                                <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">
+                                    {t('admin.needsAttention')}
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {actionItems.map(({ label, value, hint, icon: Icon, bg, color, path }) => (
+                                        <button
+                                            key={label}
+                                            type="button"
+                                            onClick={() => navigate(path)}
+                                            className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-left hover:shadow-md hover:border-[#1E5144]/20 transition-all group"
+                                        >
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div className={`inline-flex p-2.5 rounded-xl ${bg} ${color}`}>
+                                                    <Icon size={20} />
+                                                </div>
+                                                <ArrowRight size={16} className="text-gray-300 group-hover:text-[#1E5144] transition-colors" />
+                                            </div>
+                                            <p className="text-3xl font-black text-gray-900">{value}</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{label}</p>
+                                            <p className="text-xs text-gray-500 mt-2">{hint}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            </section>
+
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                                 {[
-                                    {
-                                        label: t('admin.totalUsers'),
-                                        value: summary.total_users ?? 0,
-                                        sub: `${summary.verified_users ?? 0} ${t('admin.verified')}`,
-                                        icon: Users,
-                                        bg: 'bg-[#E8F5E9]',
-                                        color: 'text-[#1E5144]',
-                                        action: null,
-                                    },
-                                    {
-                                        label: t('admin.foodPosts'),
-                                        value: summary.total_posts ?? 0,
-                                        sub: `${summary.delivered_posts ?? 0} ${t('admin.delivered')}`,
-                                        icon: Package,
-                                        bg: 'bg-blue-50',
-                                        color: 'text-blue-600',
-                                        action: () => navigate('/admin/posts'),
-                                    },
-                                    {
-                                        label: t('admin.deliveries'),
-                                        value: summary.total_deliveries ?? 0,
-                                        sub: `${summary.delivery_completion_rate ?? 0}% ${t('admin.completion')}`,
-                                        icon: Truck,
-                                        bg: 'bg-orange-50',
-                                        color: 'text-orange-600',
-                                        action: () => navigate('/admin/deliveries'),
-                                    },
-                                    {
-                                        label: t('admin.pendingReview'),
-                                        value: summary.pending_verifications ?? 0,
-                                        sub: `${summary.rejected_users ?? 0} ${t('admin.rejected')}`,
-                                        icon: ShieldAlert,
-                                        bg: 'bg-amber-50',
-                                        color: 'text-amber-600',
-                                        action: () => navigate('/admin/users'),
-                                    },
-                                ].map(({ label, value, sub, icon: Icon, bg, color, action }) => (
-                                    <button
-                                        key={label}
-                                        type="button"
-                                        onClick={action || undefined}
-                                        className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-left ${action ? 'hover:shadow-md hover:border-[#1E5144]/20 transition-all cursor-pointer' : ''}`}
-                                    >
-                                        <div className={`inline-flex p-2.5 rounded-xl ${bg} ${color} mb-3`}>
-                                            <Icon size={20} />
+                                    { label: t('admin.totalUsers'), value: summary?.total_users ?? 0, icon: Users },
+                                    { label: t('admin.foodPosts'), value: summary?.total_posts ?? 0, icon: Package },
+                                    { label: t('admin.deliveries'), value: summary?.total_deliveries ?? 0, icon: Truck },
+                                    { label: t('admin.fulfilledRequests'), value: summary?.fulfilled_requests ?? 0, icon: CheckCircle },
+                                ].map(({ label, value, icon: Icon }) => (
+                                    <div key={label} className="bg-[#F9FAFB] p-4 rounded-2xl border border-gray-100">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Icon size={16} className="text-[#1E5144]" />
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{label}</p>
                                         </div>
-                                        <p className="text-2xl font-black text-gray-900">{value}</p>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{label}</p>
-                                        <p className="text-[10px] font-bold text-gray-400 mt-1">{sub}</p>
-                                    </button>
+                                        <p className="text-xl font-black text-gray-900">{value}</p>
+                                    </div>
                                 ))}
                             </div>
 
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8">
-                                <h3 className="text-lg font-black text-gray-900 mb-1">{t('admin.donationTrends')}</h3>
-                                <p className="text-sm text-gray-400 font-medium mb-5">{t('admin.donationTrendsDesc')}</p>
-                                <BarChart
-                                    labels={analytics.monthly_donations?.labels}
-                                    counts={analytics.monthly_donations?.counts || []}
-                                    color="bg-[#1E5144]"
-                                    emptyLabel={t('common.noData')}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                                    <h3 className="text-lg font-black text-gray-900 mb-1">{t('admin.claimsVsDeliveries')}</h3>
-                                    <p className="text-sm text-gray-400 font-medium mb-5">{t('admin.monthlyComparison')}</p>
-                                    <DualBarChart
-                                        labels={analytics.monthly_claims?.labels || analytics.monthly_deliveries?.labels || []}
-                                        primary={analytics.monthly_claims?.counts || []}
-                                        secondary={analytics.monthly_deliveries?.counts || []}
-                                        emptyLabel={t('common.noData')}
-                                    />
-                                    <div className="flex justify-center gap-6 mt-4">
-                                        <LegendItem color="bg-[#1E5144]" label={t('admin.claims')} />
-                                        <LegendItem color="bg-[#86EFAC]" label={t('admin.deliveries')} />
-                                    </div>
-                                </div>
-
-                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                                    <h3 className="text-lg font-black text-gray-900 mb-1">{t('admin.foodCategories')}</h3>
-                                    <p className="text-sm text-gray-400 font-medium mb-5">{t('admin.categoryBreakdown')}</p>
-                                    {categories.length === 0 ? (
-                                        <p className="text-sm text-gray-400 text-center py-8">{t('admin.noCategoryData')}</p>
-                                    ) : (
-                                        <div className="flex items-center gap-8">
-                                            <div className="relative w-36 h-36 shrink-0">
-                                                <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#E5E7EB" strokeWidth="4" />
-                                                    {donutSegments.map((seg, i) => (
-                                                        <DonutSegment key={i} {...seg} />
-                                                    ))}
-                                                </svg>
-                                                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                                    <span className="text-[10px] text-gray-400">Total</span>
-                                                    <span className="text-lg font-black">{categoryTotal}</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex-1 space-y-2">
-                                                {categories.slice(0, 6).map((cat, i) => (
-                                                    <div key={cat.name} className="flex items-center justify-between gap-2">
-                                                        <div className="flex items-center gap-2 min-w-0">
-                                                            <div
-                                                                className="w-2 h-2 rounded-full shrink-0"
-                                                                style={{ backgroundColor: categoryColors[i % categoryColors.length] }}
-                                                            />
-                                                            <span className="text-xs font-bold text-gray-700 truncate">{cat.name}</span>
-                                                        </div>
-                                                        <span className="text-xs font-black text-gray-900 shrink-0">{cat.count}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                                     <div className="flex items-center justify-between mb-5">
                                         <h3 className="text-lg font-black text-gray-900">{t('admin.recentDeliveries')}</h3>
@@ -372,7 +246,8 @@ const Dashboard = () => {
                                                             {item.food_type || t('admin.foodDonation')}
                                                         </p>
                                                         <p className="text-[10px] text-gray-400 mt-0.5">
-                                                            {item.volunteer_name || t('admin.awaitingVolunteer')} · {item.pickup_location?.split('|')[0]?.trim() || t('admin.locationTbd')}
+                                                            {item.volunteer_name || t('admin.awaitingVolunteer')} ·{' '}
+                                                            {item.pickup_location?.split('|')[0]?.trim() || t('admin.locationTbd')}
                                                         </p>
                                                     </div>
                                                     <span className={`text-[10px] font-black uppercase shrink-0 ml-3 ${STATUS_STYLES[item.status] || 'text-gray-500'}`}>
@@ -384,6 +259,13 @@ const Dashboard = () => {
                                     )}
                                 </div>
                             </div>
+
+                            <p className="text-center text-xs text-gray-400 mt-8">
+                                {t('admin.dashboardAnalyticsHint')}{' '}
+                                <button type="button" onClick={() => navigate('/admin/stats')} className="font-bold text-[#1E5144] hover:underline">
+                                    {t('sidebar.admin.stats')}
+                                </button>
+                            </p>
                         </>
                     )}
                 </div>
@@ -391,12 +273,5 @@ const Dashboard = () => {
         </div>
     );
 };
-
-const LegendItem = ({ color, label }) => (
-    <div className="flex items-center gap-2">
-        <div className={`w-2 h-2 rounded-full ${color}`} />
-        <span className="text-[11px] font-semibold text-gray-500">{label}</span>
-    </div>
-);
 
 export default Dashboard;

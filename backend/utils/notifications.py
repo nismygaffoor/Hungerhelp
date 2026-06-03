@@ -18,6 +18,7 @@ DASHBOARD_LINKS = {
 def notify_user(user_id, ntype, params=None, link=None):
     if not user_id:
         return None
+    user_id = str(user_id)
     notification_id = Notification.create(user_id, ntype, params, link)
     _dispatch_sms(user_id, ntype, params)
     return notification_id
@@ -38,9 +39,11 @@ def notify_users(user_ids, ntype, params=None, link=None):
 
 
 def notify_role(role, ntype, params=None, link=None):
-    cursor = User.collection.find({"role": role}, {"_id": 1})
-    for user in cursor:
-        notify_user(str(user["_id"]), ntype, params, link)
+    import re
+    pattern = re.compile(f"^{re.escape(role)}$", re.IGNORECASE)
+    for user in User.collection.find({}, {"_id": 1, "role": 1}):
+        if pattern.match(user.get("role") or ""):
+            notify_user(str(user["_id"]), ntype, params, link)
 
 
 def food_label(value, fallback="Food donation"):
@@ -51,11 +54,56 @@ def food_label(value, fallback="Food donation"):
 
 def notify_food_claimed(donor_id, beneficiary_name, food_type):
     notify_user(
-        donor_id,
+        str(donor_id) if donor_id else None,
         "food_claimed",
         {"name": beneficiary_name or "Someone", "food": food_label(food_type)},
         "/donor/history",
     )
+
+
+def notify_beneficiaries_new_food_available(post_id):
+    """In-app (+ SMS via notify_user) alert for eligible beneficiaries when food is posted."""
+    from bson import ObjectId
+    from models.food_post import FoodPost
+    from services.food_claim import post_matches_beneficiary
+
+    try:
+        post = FoodPost.collection.find_one({"_id": ObjectId(post_id)})
+    except Exception:
+        return
+    if not post or post.get("status") != "Available":
+        return
+
+    food = food_label(post.get("food_type"))
+    city = (post.get("city") or post.get("district") or "your area").strip()
+    donor_name = "A donor"
+    donor_id = post.get("donor_id")
+    if donor_id:
+        try:
+            oid = ObjectId(str(donor_id))
+        except Exception:
+            oid = donor_id
+        donor = User.collection.find_one(
+            {"_id": oid},
+            {"name": 1, "businessName": 1},
+        )
+        if donor:
+            donor_name = donor.get("businessName") or donor.get("name") or donor_name
+
+    for beneficiary in User.collection.find({"role": {"$regex": "^Beneficiary$", "$options": "i"}}):
+        if not post_matches_beneficiary(post, beneficiary):
+            continue
+        notify_user(
+            str(beneficiary["_id"]),
+            "new_food_available",
+            {
+                "food": food,
+                "city": city,
+                "donor": donor_name,
+                "code": post.get("sms_claim_code") or "",
+            },
+            "/beneficiary/claim",
+        )
 
 
 def notify_new_delivery_task(food_type):

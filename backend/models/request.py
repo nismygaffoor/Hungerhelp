@@ -79,10 +79,19 @@ class FoodRequest:
             if hasattr(created_at, "isoformat"):
                 doc["created_at"] = created_at.isoformat()
 
-            beneficiary = User.collection.find_one(
-                {"_id": ObjectId(doc["beneficiary_id"])},
-                {"name": 1, "beneficiaryType": 1, "contact": 1, "district": 1},
-            )
+            beneficiary = None
+            bid = doc.get("beneficiary_id")
+            if bid:
+                try:
+                    beneficiary = User.collection.find_one(
+                        {"_id": ObjectId(bid)},
+                        {"name": 1, "beneficiaryType": 1, "contact": 1, "district": 1},
+                    )
+                except Exception:
+                    beneficiary = User.collection.find_one(
+                        {"_id": bid},
+                        {"name": 1, "beneficiaryType": 1, "contact": 1, "district": 1},
+                    )
             if beneficiary:
                 doc["beneficiary_name"] = beneficiary.get("name", "Beneficiary")
                 doc["beneficiary_type"] = beneficiary.get("beneficiaryType", "Individual")

@@ -136,6 +136,10 @@
       "admin_assigned_task": {
         "title": "Admin assigned delivery",
         "message": "ඔබ {{food}} deliver කිරීමට assign කරන ලදී."
+      },
+      "new_food_available": {
+        "title": "නව ආහාර ලබා ගත හැක",
+        "message": "{{donor}} {{city}} හි {{food}} post කළා. බලන්න claim කරන්න tap කරන්න."
       }
     }
   },
@@ -362,9 +366,16 @@
   },
   "admin": {
     "dashboardTitle": "Admin Dashboard",
-    "dashboardSubtitle": "Platform oversight සහ user management.",
-    "statsTitle": "Reports & Analytics",
-    "statsSubtitle": "Platform impact, donation trends සහ delivery performance.",
+    "dashboardSubtitle": "Today's overview — attention items සහ live delivery activity.",
+    "dashboardVerifyHint": "Document review එකක් බලාපොරොත්තු users",
+    "dashboardRequestsHint": "Open beneficiary food requests",
+    "dashboardDeliveriesHint": "Volunteer එකක් බලාපොරොත්තු deliveries",
+    "dashboardEscalatedHint": "Admin action අවශ්‍ය escalated deliveries",
+    "dashboardAnalyticsHint": "Charts, trends සහ CSV reports සඳහා යන්න",
+    "unassignedDeliveries": "Unassigned Deliveries",
+    "escalatedDeliveries": "Escalated Deliveries",
+    "statsTitle": "Analytics & Reports",
+    "statsSubtitle": "Platform trends, community impact සහ downloadable reports.",
     "totalUsers": "Total Users",
     "foodPosts": "Food Posts",
     "deliveries": "Deliveries",
@@ -488,6 +499,11 @@
     "requestsTitle": "ආහාර ඉල්ලීම් කළමනාකරණය",
     "requestsSubtitle": "අවශ්‍යතාවය 있는 ප්‍රතිලාභ ලබන්නන්ගේ ආහාර ඉල්ලීම් සමාලෝචනය කර සම්බන්ධ කරන්න.",
     "communityRequests": "ප්‍රජා ඉල්ලීම්",
+    "allStatuses": "සියලුම statuses",
+    "noRequestsFound": "ආහාර ඉල්ලීම් නැත",
+    "searchRequestsPlaceholder": "ප්‍රතිලාභියා, ආහාර හෝ විස්තරය සොයන්න…",
+    "requestBeneficiary": "ප්‍රතිලාභියා",
+    "loadRequestsFailed": "ආහාර ඉල්ලීම් load කළ නොහැක. backend restart කර නැවත උත්සාහ කරන්න.",
     "verifyTitle": "සත්‍යාපන ඉල්ලීම්",
     "verifySubtitle": "නව සාමාජිකයන්ගේ සත්‍යාපන ඉල්ලීම් සමාලෝචනය කර අනුමත කරන්න.",
     "pendingVerificationsTitle": "පොරොත්තු සත්‍යාපන",

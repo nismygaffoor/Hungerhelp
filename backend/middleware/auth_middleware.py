@@ -95,6 +95,9 @@ def check_platform_access():
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        if request.method == 'OPTIONS':
+            return '', 204
+
         token = _extract_token()
 
         if not token:

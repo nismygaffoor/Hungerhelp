@@ -99,7 +99,7 @@ def claim_food_post(post_id, beneficiary_id):
         )
 
         notify_food_claimed(
-            str(post["donor_id"]),
+            str(post.get("donor_id", "")),
             beneficiary.get("name") or "Someone",
             post.get("food_type"),
         )

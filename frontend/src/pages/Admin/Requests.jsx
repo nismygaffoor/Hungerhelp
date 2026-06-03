@@ -4,8 +4,7 @@ import api from '../../api/axios';
 import Sidebar from './Sidebar';
 import Navbar from '../../components/Navbar';
 import { DISTRICTS, getRequestDistrict, getRequestAddressDisplay } from '../../constants/locations';
-import { translateCategory, translateUrgency } from '../../i18n/donorVolunteerI18n';
-import { translateStatus } from '../../i18n/donorVolunteerI18n';
+import { translateCategory, translateUrgency, translateStatus } from '../../i18n/donorVolunteerI18n';
 import {
     Search,
     MapPin,
@@ -36,18 +35,43 @@ const Requests = () => {
     const [urgencyFilter, setUrgencyFilter] = useState('All Urgency');
     const [districtFilter, setDistrictFilter] = useState('All');
     const [statusFilter, setStatusFilter] = useState('All');
+    const [loadError, setLoadError] = useState('');
+
+    const parseRequestsResponse = (data) => {
+        if (Array.isArray(data)) {
+            return {
+                requests: data,
+                summary: {
+                    total: data.length,
+                    active: data.filter((r) => r.status === 'Active').length,
+                    fulfilled: data.filter((r) => r.status === 'Fulfilled').length,
+                },
+            };
+        }
+        return {
+            requests: data.requests || [],
+            summary: data.summary || { total: 0, active: 0, fulfilled: 0 },
+        };
+    };
 
     const fetchRequests = async () => {
         setLoading(true);
+        setLoadError('');
+        const params = statusFilter !== 'All' ? { status: statusFilter } : {};
         try {
-            const res = await api.get('/admin/requests', {
-                params: statusFilter !== 'All' ? { status: statusFilter } : {},
-            });
-            setRequests(res.data.requests || []);
-            setSummary(res.data.summary || { total: 0, active: 0, fulfilled: 0 });
+            let res;
+            try {
+                res = await api.get('/admin/requests', { params });
+            } catch {
+                res = await api.get('/requests/', { params });
+            }
+            const parsed = parseRequestsResponse(res.data);
+            setRequests(parsed.requests);
+            setSummary(parsed.summary);
         } catch (err) {
             console.error('Failed to fetch admin requests:', err);
             setRequests([]);
+            setLoadError(err.response?.data?.error || t('admin.loadRequestsFailed'));
         } finally {
             setLoading(false);
         }
@@ -178,6 +202,12 @@ const Requests = () => {
                             />
                         </div>
                     </div>
+
+                    {loadError && (
+                        <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-xl text-sm font-bold border border-red-100">
+                            {loadError}
+                        </div>
+                    )}
 
                     {loading ? (
                         <div className="flex items-center justify-center h-64 bg-gray-50/50 rounded-3xl border border-dashed border-gray-100">
