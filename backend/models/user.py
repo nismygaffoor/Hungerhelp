@@ -67,16 +67,16 @@ class User:
             return []
         
         # Case-insensitive partial match
-        cursor = User.collection.find({
+        beneficiaries = User.collection.find({
             "role": "Beneficiary",
-            "name": {"$regex": query, "$options": "i"}
+            "name": {"$regex": query, "$options": "i"}  # partial match, case-insensitive
         }, {"password": 0}).limit(10)
         
         users = []
-        for u in cursor:
+        for u in beneficiaries:
             u['_id'] = str(u['_id'])
             users.append(u)
-        return users
+        return users #convert ObjectId to string
 
     @staticmethod
     def find_beneficiary_by_name(name):
@@ -89,7 +89,7 @@ class User:
     @staticmethod
     def update_profile(user_id, data):
         allowed_fields = ['name', 'contact', 'address', 'district', 'home_address', 'city', 'language', 'businessName', 'beneficiaryType', 'experience']
-        updates = {k: data[k] for k in allowed_fields if k in data}
+        updates = {k: data[k] for k in allowed_fields if k in data} #create update date 
         if not updates:
             return False
         updates = normalize_user_address(updates)

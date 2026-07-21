@@ -16,14 +16,14 @@ from utils.notifications import (
 
 delivery_bp = Blueprint('delivery', __name__)
 
-def _volunteer_query(volunteer_id):
+def _volunteer_query(volunteer_id):#query to get tasks assigned to a volunteer
     try:
         oid = ObjectId(volunteer_id)
         return {"$or": [{"volunteer_id": volunteer_id}, {"volunteer_id": oid}]}
     except Exception:
         return {"volunteer_id": volunteer_id}
 
-def _enrich_task(task):
+def _enrich_task(task):#enrich task with food post details
     post = FoodPost.collection.find_one({"_id": ObjectId(task['post_id'])})
     if post:
         task['food_type'] = post.get('food_type', 'Food Donation')

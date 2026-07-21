@@ -14,15 +14,15 @@ UNVERIFIED_ALLOWED_PREFIXES = (
     '/users/profile-stats',
     '/notifications',
     '/sms/',
-)
+)# create a list of prefixes that are allowed to access the platform without verification
 
 def _extract_token():
     if 'Authorization' not in request.headers:
         return None
     auth_header = request.headers['Authorization']
-    if auth_header.startswith('Bearer '):
+    if auth_header.startswith('Bearer '): # check token has Bearer prefix
         return auth_header.split(' ')[1]
-    return auth_header
+    return auth_header #return token
 
 def _is_access_locked(user):
     """Lock platform only after admin rejection (including re-submission pending review)."""

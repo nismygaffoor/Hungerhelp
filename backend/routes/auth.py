@@ -24,7 +24,7 @@ def login():
 
     user = User.find_by_email(data['email'])
     
-    if user and User.verify_password(user['password'], data['password']):
+    if user and User.verify_password(user['password'], data['password']): #check if user exists and password is correct
         # Verify role match (case-insensitive)
         if str(data['role']).lower() != str(user['role']).lower():
             return jsonify({"error": f"This account is registered as a {user['role']}, not a {data['role']}"}), 401

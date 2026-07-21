@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 import os
-import uuid
+import uuid #for generating unique file names
 from models.food_post import FoodPost
 from middleware.auth_middleware import token_required
 from datetime import datetime
@@ -23,22 +23,22 @@ def create_post():
     if current_user['role'] != 'Donor':
         return jsonify({"error": "Only donors can post food"}), 403
 
-    # Handle both JSON and Multipart data
+    # Handle both JSON and Multipart data(posting data from frontend)
     if request.is_json:
         data = request.json
     else:
         data = request.form.to_dict()
 
     if not data or 'food_type' not in data:
-        return jsonify({"error": "Missing required fields (food_type)"}), 400
+        return jsonify({"error": "Missing required fields (food_type)"}), 400#return error if food_type is missing
 
-    data = normalize_location_data(data)
+    data = normalize_location_data(data)#normalize location data
     if not data.get('district') or not data.get('city'):
-        return jsonify({"error": "District and city are required"}), 400
+        return jsonify({"error": "District and city are required"}), 400#return error if district or city is missing
     if not data.get('location'):
-        return jsonify({"error": "Location is required"}), 400
+        return jsonify({"error": "Location is required"}), 400#return error if location is missing
 
-    # parse items if present (sent as JSON string from frontend)
+    # convert items if present (sent as JSON string from frontend)
     import json
     if 'items' in data and isinstance(data['items'], str):
         try:
@@ -49,10 +49,10 @@ def create_post():
     # Collect all item images into a top-level list for compatibility
     all_images = []
     import uuid
-    for i, item in enumerate(data.get('items', [])):
-        item_images = []
+    for i, item in enumerate(data.get('items', [])): #enumerate items to get index and item
+        item_images = [] #create list to store images for each item
         file_key = f'item_images_{i}'
-        if file_key in request.files:
+        if file_key in request.files: 
             item_files = request.files.getlist(file_key)
             for file in item_files:
                 if file and file.filename:
